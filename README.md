@@ -1,2 +1,2 @@
-A sample command-line application with an entrypoint in `bin/`, library code
-in `lib/`, and example unit test in `test/`.
+# Cached Builder
+Helps to optimize the build_runner by caching generated codes for non changed .dart files

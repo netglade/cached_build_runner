@@ -1,10 +1,11 @@
 import 'dart:io';
 
-import 'package:build_cache/database/database_service.dart';
-import 'package:build_cache/model/code_file.dart';
-import 'package:build_cache/utils/log.dart';
-import 'package:build_cache/utils/utils.dart';
 import 'package:path/path.dart' as path;
+
+import 'database/database_service.dart';
+import 'model/code_file.dart';
+import 'utils/log.dart';
+import 'utils/utils.dart';
 
 class BuildCache {
   final DatabaseService _databaseService;

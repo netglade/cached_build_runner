@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "build_cache",
+            "name": "cached_builder",
             "request": "launch",
             "type": "dart",
-            "program": "bin/build_cache.dart",
+            "program": "bin/cached_builder.dart",
             "args": [
                 "-c",
                 "/Users/jyotirmoypaul/.build_cache",

@@ -1,5 +1,6 @@
-import 'package:build_cache/utils/utils.dart';
 import 'package:hive/hive.dart';
+
+import '../utils/utils.dart';
 
 abstract class DatabaseService {
   Future<void> init(String dirPath);

@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:build_cache/build_cache.dart' as build_cache;
-import 'package:build_cache/database/database_service.dart';
-import 'package:build_cache/utils/utils.dart';
+import 'package:cached_builder/cached_builder.dart' as build_cache;
+import 'package:cached_builder/database/database_service.dart';
+import 'package:cached_builder/utils/utils.dart';
 
 /// parser argument flags & options
 const help = 'help';
