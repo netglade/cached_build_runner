@@ -9,6 +9,12 @@
             "request": "launch",
             "type": "dart",
             "program": "bin/build_cache.dart",
+            "args": [
+                "-c",
+                "/Users/jyotirmoypaul/.build_cache",
+                "-p",
+			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
+            ]
         }
     ]
 }

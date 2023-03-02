@@ -1,21 +1,20 @@
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:build_cache/build_cache.dart' as build_cache;
 import 'package:build_cache/database/database_service.dart';
-import 'package:build_cache/utils/log.dart';
 import 'package:build_cache/utils/utils.dart';
+
+/// parser argument flags & options
+const help = 'help';
+const cacheDirectory = 'cache-directory';
+const projectDirectory = 'project-directory';
 
 Future<void> main(List<String> arguments) async {
   final startTime = DateTime.now();
 
-  /// TODO: let's improve the arguments handling
-
-  if (arguments.length == 2) {
-    Utils.appCacheDirectory = arguments[0];
-    Utils.projectDirectory = arguments[1];
-  } else {
-    /// TODO: throw error, with correct message
-  }
+  /// initialize parser - read necessary options
+  _initParser(arguments);
 
   /// let's make the appCacheDirectory if not existing already
   Directory(Utils.appCacheDirectory).createSync(recursive: true);
@@ -30,4 +29,36 @@ Future<void> main(List<String> arguments) async {
 
   final timeTook = DateTime.now().difference(startTime);
   Utils.logHeader('Code Generation took: $timeTook');
+}
+
+void _initParser(List<String> args) {
+  final parser = ArgParser()
+    ..addFlag(help, abbr: 'h', help: 'Print out usage instructions.')
+    ..addOption(cacheDirectory, abbr: 'c', help: 'Provide the directory where this tool can keep the caches.')
+    ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project');
+
+  final result = parser.parse(args);
+
+  if (result.wasParsed(help)) {
+    print('''
+cached_build_runner: Helps to optimize the build_runner by caching generated codes for non changed .dart files
+
+${parser.usage}}
+''');
+    exit(0);
+  }
+
+  if (result.wasParsed(cacheDirectory)) {
+    Utils.appCacheDirectory = result[cacheDirectory];
+  } else {
+    print('Please provide a cache directory for the tool. Check -h or --help for more details.');
+    exit(0);
+  }
+
+  if (result.wasParsed(projectDirectory)) {
+    Utils.projectDirectory = result[projectDirectory];
+  } else {
+    print('Please provide a project directory. Check -h or --help for more details.');
+    exit(0);
+  }
 }

@@ -1,5 +1,5 @@
-import 'dart:developer' as dev;
-
 class Logger {
-  static log(String message) => dev.log(message);
+  static log(String message) {
+    print(message);
+  }
 }
