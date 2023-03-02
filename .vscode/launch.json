@@ -14,6 +14,7 @@
                 "/Users/jyotirmoypaul/.build_cache",
                 "-p",
 			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
+                "-v",
             ]
         }
     ]

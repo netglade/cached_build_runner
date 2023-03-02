@@ -70,12 +70,12 @@ class BuildCache {
       );
 
       if (process.stderr.toString().isNotEmpty) {
-        Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}');
+        Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}', fatal: true);
       }
 
       /// check if the file was copied successfully
       if (!File(_getGeneratedFilePathFrom(file)).existsSync()) {
-        Logger.log('ERROR: _copyGeneratedCodesFor: failed to copy the cached file $file');
+        Logger.log('ERROR: _copyGeneratedCodesFor: failed to copy the cached file $file', fatal: true);
         badFiles.add(file);
       }
     }
@@ -98,13 +98,21 @@ class BuildCache {
   String _getBuildFilterList(List<CodeFile> files) {
     const testDirectoryGlob = 'test/**/*.dart';
     final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
+
+    if (Utils.skipsTest) {
+      return paths.join(',');
+    }
     return [testDirectoryGlob, ...paths].join(',');
   }
 
   /// this method runs build_runner build method with --build-filter
   /// to only generate the required codes, thus avoiding unnecessary builds
   void _generateCodesFor(List<CodeFile> files) {
-    Utils.logHeader('GENERATING CODES FOR BAD FILES (${files.length} + in "test/" directory)');
+    Utils.logHeader(
+      'GENERATING CODES FOR BAD FILES (${files.length}${Utils.skipsTest ? '' : ' + in "test/" directory'})',
+    );
+
+    if (files.isEmpty && Utils.skipsTest) return;
 
     /// following command needs to be executed
     /// flutter pub run build_runner build --build-filter="..." -d
@@ -176,13 +184,15 @@ class BuildCache {
         ],
       );
 
-      print(process.stderr);
+      if (process.stderr.toString().isNotEmpty) {
+        Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}', fatal: true);
+      }
 
       /// if file has been successfully copied, let's make an entry to the db
       if (File(cachedFilePath).existsSync()) {
         await _databaseService.createEntry(file.digest, cachedFilePath);
       } else {
-        Logger.log('ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file');
+        Logger.log('ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file', fatal: true);
       }
     }
   }
