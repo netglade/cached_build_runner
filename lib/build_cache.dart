@@ -38,13 +38,13 @@ class BuildCache {
     Logger.log('No. of Good Files: ${goodFiles.length}');
     Logger.log('No. of Bad Files: ${badFiles.length}');
 
+    /// let's handle bad files - by generating the .g.dart files for them
+    _generateCodesFor(badFiles);
+
     /// let's handle the good files - by copying the cached generated files to appropriate path
     /// we pass in the bad files as well, in case the good files could not be copied,
     /// they become bad files - though this should NOT happen, still a safe mechanism to avoid complete error
     _copyGeneratedCodesFor(goodFiles, badFiles);
-
-    /// let's handle bad files - by generating the .g.dart files for them
-    _generateCodesFor(badFiles);
 
     /// at last, let's cache the bad files - they may be required next time
     _cacheGeneratedCodesFor(badFiles);
@@ -55,39 +55,11 @@ class BuildCache {
     /// We are done, probably?
   }
 
-  /// this method compares the digest of both files to determine if a copy is necessary
-  /// if the correct file already exists, we can skip copying
-  /// though small, but unnecessarily coping can decrease the efficiency of our ambitious project
-  bool _isCopyingNecessary(CodeFile file, String cachedGeneratedCodePath) {
-    final alreadyGeneratedCodePath = _getGeneratedFilePathFrom(file);
-
-    /// if the file doesn't exists, we need to copy
-    if (!File(alreadyGeneratedCodePath).existsSync()) {
-      Logger.log('_isCopyingNecessary:: $alreadyGeneratedCodePath doesn\'t exist, so copying is necessary');
-      return true;
-    }
-
-    /// if the digest doesn't match we need to copy
-    final alreadyGeneratedCodePathHash = Utils.calculateDigestFor(alreadyGeneratedCodePath);
-    final cachedGeneratedCodePathHash = Utils.calculateDigestFor(cachedGeneratedCodePath);
-
-    if (alreadyGeneratedCodePathHash != cachedGeneratedCodePathHash) {
-      Logger.log('_isCopyingNecessary:: copying is necessary as hash for both files are different');
-      return true;
-    }
-
-    return false;
-  }
-
   void _copyGeneratedCodesFor(List<CodeFile> files, List<CodeFile> badFiles) {
     Utils.logHeader('COPYING GENERATED CODES');
 
     for (final file in files) {
       final cachedGeneratedCodePath = _databaseService.getCachedFilePath(file.digest);
-
-      /// if .g.dart files has not been changed, let's not copy either
-      if (!_isCopyingNecessary(file, cachedGeneratedCodePath)) continue;
-
       Logger.log('Copying cached to: ${_getGeneratedFilePathFrom(file).split('/').last}');
 
       final process = Process.runSync(
@@ -156,7 +128,7 @@ class BuildCache {
     );
 
     if (process.stderr.toString().isNotEmpty) {
-      throw Exception('_generateCodesFor :: failed to run build_runner build');
+      throw Exception('_generateCodesFor :: failed to run build_runner build :: ${process.stderr}');
     }
 
     print(process.stdout);
