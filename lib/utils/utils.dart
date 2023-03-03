@@ -8,7 +8,7 @@ abstract class Utils {
   static String appCacheDirectory = '';
   static String projectDirectory = '';
   static bool isVerbose = true;
-  static bool skipsTest = false;
+  static bool generateTestMocks = false;
 
   static String calculateDigestFor(String filePath) {
     return md5.convert(File(filePath).readAsBytesSync()).toString();
@@ -16,5 +16,9 @@ abstract class Utils {
 
   static void logHeader(String title) {
     Logger.log('\n---------------------- $title ----------------------');
+  }
+
+  static String getFileName(String path) {
+    return path.split('/').last;
   }
 }

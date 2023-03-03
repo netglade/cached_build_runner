@@ -9,15 +9,15 @@ import 'package:cached_builder/utils/utils.dart';
 /// parser argument flags & options
 const help = 'help';
 const verbose = 'verbose';
-const skipTest = 'skip-test';
+const generateTestMocks = 'generate-test-mock';
 const cacheDirectory = 'cache-directory';
 const projectDirectory = 'project-directory';
 
 Future<void> main(List<String> arguments) async {
   final startTime = DateTime.now();
 
-  /// initialize parser - read necessary options
-  _initParser(arguments);
+  /// parse args
+  _parseArgs(arguments);
 
   /// let's make the appCacheDirectory if not existing already
   Directory(Utils.appCacheDirectory).createSync(recursive: true);
@@ -34,11 +34,16 @@ Future<void> main(List<String> arguments) async {
   Utils.logHeader('Code Generation took: $timeTook');
 }
 
-void _initParser(List<String> args) {
+void _parseArgs(List<String> args) {
   final parser = ArgParser()
     ..addFlag(help, abbr: 'h', help: 'Print out usage instructions.', negatable: false)
     ..addFlag(verbose, abbr: 'v', help: 'Prints out logs during build_runner build', negatable: false)
-    ..addFlag(skipTest, abbr: 's', help: 'Skips running build_runner build for "test" directory', negatable: false)
+    ..addFlag(
+      generateTestMocks,
+      abbr: 't',
+      help: 'Generates mocks for test files, if this flag is not provided mock generations are skipped.',
+      negatable: false,
+    )
     ..addSeparator('')
     ..addOption(cacheDirectory, abbr: 'c', help: 'Provide the directory where this tool can keep the caches.')
     ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project');
@@ -49,7 +54,7 @@ void _initParser(List<String> args) {
     Logger.log('''
 cached_build_runner: Helps to optimize the build_runner by caching generated codes for non changed .dart files
 
-${parser.usage}}
+${parser.usage}
 ''');
     exit(0);
   }
@@ -69,5 +74,5 @@ ${parser.usage}}
   }
 
   Utils.isVerbose = result.wasParsed(verbose);
-  Utils.skipsTest = result.wasParsed(skipTest);
+  Utils.generateTestMocks = result.wasParsed(generateTestMocks);
 }

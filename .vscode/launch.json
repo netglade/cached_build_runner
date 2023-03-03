@@ -15,6 +15,7 @@
                 "-p",
 			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
                 "-v",
+                "-t",
             ]
         }
     ]

@@ -59,7 +59,7 @@ class BuildCache {
 
     for (final file in files) {
       final cachedGeneratedCodePath = _databaseService.getCachedFilePath(file.digest);
-      Logger.log('Copying cached to: ${_getGeneratedFilePathFrom(file).split('/').last}');
+      Logger.log('Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}');
 
       final process = Process.runSync(
         'cp',
@@ -99,20 +99,22 @@ class BuildCache {
     const testDirectoryGlob = 'test/**/*.dart';
     final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
 
-    if (Utils.skipsTest) {
-      return paths.join(',');
+    if (Utils.generateTestMocks) {
+      /// if test mocks are needed, let's add the testDirectory glob
+      return [testDirectoryGlob, ...paths].join(',');
     }
-    return [testDirectoryGlob, ...paths].join(',');
+
+    return paths.join(',');
   }
 
   /// this method runs build_runner build method with --build-filter
   /// to only generate the required codes, thus avoiding unnecessary builds
   void _generateCodesFor(List<CodeFile> files) {
     Utils.logHeader(
-      'GENERATING CODES FOR BAD FILES (${files.length}${Utils.skipsTest ? '' : ' + in "test/" directory'})',
+      'GENERATING CODES FOR BAD FILES (${files.length}${Utils.generateTestMocks ? ' + in "test/" directory' : ''})',
     );
 
-    if (files.isEmpty && Utils.skipsTest) return;
+    if (files.isEmpty && !Utils.generateTestMocks) return;
 
     /// following command needs to be executed
     /// flutter pub run build_runner build --build-filter="..." -d
@@ -174,7 +176,7 @@ class BuildCache {
     Utils.logHeader('CACHING GENERATED CODES (${files.length})');
 
     for (final file in files) {
-      Logger.log('Caching generated code for: ${file.path}');
+      Logger.log('Caching generated code for: ${Utils.getFileName(file.path)}');
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       final process = Process.runSync(
         'cp',
