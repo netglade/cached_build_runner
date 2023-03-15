@@ -14,7 +14,11 @@ class BuildCache {
 
   /// this method runs an efficient version of `build_runner build`
   Future<void> build() async {
-    final files = _fetchRequiredFilePaths();
+    Utils.logHeader('DETERMINING FILES THAT NEEDS GENERATION');
+
+    final libFiles = _fetchFilePathsFromLib();
+    final testFiles = await _fetchFilePathsFromTest();
+    final files = List.from(libFiles)..addAll(testFiles);
 
     final List<CodeFile> goodFiles = [];
     final List<CodeFile> badFiles = [];
@@ -34,10 +38,10 @@ class BuildCache {
       }
     }
 
-    Logger.log('No. of good files: ${goodFiles.length}');
-    Logger.log('No. of bad files: ${badFiles.length}');
+    Logger.log('No. of cached files: ${goodFiles.length}');
+    Logger.log('No. of non-cached files: ${badFiles.length}');
 
-    /// let's handle bad files - by generating the .g.dart files for them
+    /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     _generateCodesFor(badFiles);
 
     /// let's handle the good files - by copying the cached generated files to appropriate path
@@ -87,23 +91,17 @@ class BuildCache {
   String _getGeneratedFilePathFrom(CodeFile file) {
     final path = file.path;
     final lastDotDart = path.lastIndexOf('.dart');
+    final extension = file.isTestFile ? '.mocks.dart' : '.g.dart';
+
     if (lastDotDart >= 0) {
-      return '${path.substring(0, lastDotDart)}.g.dart';
+      return '${path.substring(0, lastDotDart)}$extension';
     }
 
     return path;
   }
 
-  /// we always want to generate all the codes inside 'test/' directory
   String _getBuildFilterList(List<CodeFile> files) {
-    const testDirectoryGlob = 'test/**/*.dart';
     final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
-
-    if (Utils.generateTestMocks) {
-      /// if test mocks are needed, let's add the testDirectory glob
-      return [testDirectoryGlob, ...paths].join(',');
-    }
-
     return paths.join(',');
   }
 
@@ -111,10 +109,10 @@ class BuildCache {
   /// to only generate the required codes, thus avoiding unnecessary builds
   void _generateCodesFor(List<CodeFile> files) {
     Utils.logHeader(
-      'GENERATING CODES FOR BAD FILES (${files.length}${Utils.generateTestMocks ? ' + in "test/" directory' : ''})',
+      'GENERATING CODES FOR BAD FILES (${files.length})',
     );
 
-    if (files.isEmpty && !Utils.generateTestMocks) return;
+    if (files.isEmpty) return;
 
     /// following command needs to be executed
     /// flutter pub run build_runner build --build-filter="..." -d
@@ -142,10 +140,52 @@ class BuildCache {
     Logger.log(process.stdout);
   }
 
-  /// this method returns all the files that needs code generations
-  List<CodeFile> _fetchRequiredFilePaths() {
-    Utils.logHeader('DETERMINING FILES THAT NEEDS GENERATION');
+  final _generateMocksFormattingRegex = RegExp(r'(.*?):@GenerateMocks\(\[(.*?)\]\)', dotAll: true);
 
+  List<List<String>> _formatOutput(String input) {
+    final matches = _generateMocksFormattingRegex.allMatches(input);
+    final List<List<String>> output = [];
+
+    for (final match in matches) {
+      if (match.groupCount >= 2) {
+        final filePath = match.group(1) ?? '';
+        final dependencies = match.group(2) ?? '';
+
+        output.add([filePath.trim(), ...dependencies.split(',').map((s) => s.trim())]);
+      }
+    }
+
+    return output;
+  }
+
+  Future<List<CodeFile>> _fetchFilePathsFromTest() async {
+    if (!Utils.generateTestMocks) return const [];
+
+    final List<CodeFile> codeFiles = [];
+
+    final pcregrepProcess = Process.runSync(
+      'pcregrep',
+      ['-r', '-M', "(?s)@GenerateMocks(.*?)]", path.join(Utils.projectDirectory, 'test')],
+      runInShell: true,
+    );
+    final grepOutput = pcregrepProcess.stdout.toString();
+    for (final files in _formatOutput(grepOutput)) {
+      codeFiles.add(
+        CodeFile(
+          path: files[0],
+          digest: Utils.calculateTestFileDigestFor(files),
+          isTestFile: true,
+        ),
+      );
+    }
+
+    Logger.log('Found ${codeFiles.length} files in "test/" that needs code generation');
+
+    return codeFiles;
+  }
+
+  /// this method returns all the files that needs code generations
+  List<CodeFile> _fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
     final libRegExp = RegExp(r"part '.+\.g\.dart';");
 
@@ -173,7 +213,7 @@ class BuildCache {
 
   /// copies the generated files to cache directory, and make an entry in database
   void _cacheGeneratedCodesFor(List<CodeFile> files) async {
-    Utils.logHeader('CACHING GENERATED CODES (${files.length})');
+    Utils.logHeader('CACHING NEWLY GENERATED CODES (${files.length})');
 
     for (final file in files) {
       Logger.log('Caching generated code for: ${Utils.getFileName(file.path)}');
