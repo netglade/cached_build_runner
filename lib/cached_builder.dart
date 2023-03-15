@@ -1,4 +1,3 @@
-import 'dart:convert' as convert;
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
@@ -157,12 +156,12 @@ class BuildCache {
 
     final List<CodeFile> codeFiles = [];
 
-    final grepProcess = Process.runSync(
-      'grep',
-      ['-r', '-E', RegExp(r"@GenerateMocks\(\[.*\]\)").pattern, path.join(Utils.projectDirectory, 'test')],
+    final pcregrepProcess = Process.runSync(
+      'pcregrep',
+      ['-r', '-M', "(?s)@GenerateMocks(.*?)]", path.join(Utils.projectDirectory, 'test')],
       runInShell: true,
     );
-    final grepOutput = grepProcess.stdout.toString();
+    final grepOutput = pcregrepProcess.stdout.toString().replaceAll(',\n', ',').replaceFirst('([\n', '([');
 
     final lines = grepOutput.trim().split('\n');
     final files = lines.map(_formatOutput);
