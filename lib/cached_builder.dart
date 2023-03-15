@@ -38,8 +38,8 @@ class BuildCache {
       }
     }
 
-    Logger.log('No. of good files: ${goodFiles.length}');
-    Logger.log('No. of bad files: ${badFiles.length}');
+    Logger.log('No. of cached files: ${goodFiles.length}');
+    Logger.log('No. of non-cached files: ${badFiles.length}');
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     _generateCodesFor(badFiles);
@@ -140,15 +140,22 @@ class BuildCache {
     Logger.log(process.stdout);
   }
 
-  final _generateMocksFormattingRegex = RegExp(r'(.*):@GenerateMocks\(\[(.*)\]\)');
+  final _generateMocksFormattingRegex = RegExp(r'(.*?):@GenerateMocks\(\[(.*?)\]\)', dotAll: true);
 
-  String _formatOutput(String input) {
-    final match = _generateMocksFormattingRegex.firstMatch(input);
-    final fileName = match?.group(1);
-    final items = match?.group(2);
-    final formattedItems = items?.replaceAll(',', '');
+  List<List<String>> _formatOutput(String input) {
+    final matches = _generateMocksFormattingRegex.allMatches(input);
+    final List<List<String>> output = [];
 
-    return '$fileName $formattedItems';
+    for (final match in matches) {
+      if (match.groupCount >= 2) {
+        final filePath = match.group(1) ?? '';
+        final dependencies = match.group(2) ?? '';
+
+        output.add([filePath.trim(), ...dependencies.split(',').map((s) => s.trim())]);
+      }
+    }
+
+    return output;
   }
 
   Future<List<CodeFile>> _fetchFilePathsFromTest() async {
@@ -161,17 +168,12 @@ class BuildCache {
       ['-r', '-M', "(?s)@GenerateMocks(.*?)]", path.join(Utils.projectDirectory, 'test')],
       runInShell: true,
     );
-    final grepOutput = pcregrepProcess.stdout.toString().replaceAll(',\n', ',').replaceFirst('([\n', '([');
-
-    final lines = grepOutput.trim().split('\n');
-    final files = lines.map(_formatOutput);
-
-    for (final file in files) {
-      final dependentFiles = file.split(' ').map((d) => d.trim()).toList();
+    final grepOutput = pcregrepProcess.stdout.toString();
+    for (final files in _formatOutput(grepOutput)) {
       codeFiles.add(
         CodeFile(
-          path: dependentFiles[0],
-          digest: Utils.calculateTestFileDigestFor(dependentFiles),
+          path: files[0],
+          digest: Utils.calculateTestFileDigestFor(files),
           isTestFile: true,
         ),
       );

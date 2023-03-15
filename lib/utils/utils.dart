@@ -14,8 +14,15 @@ abstract class Utils {
     return md5.convert(utf8.encode(value)).toString();
   }
 
+  static final Map<String, String> _hashMap = {};
+
   static String calculateDigestFor(String filePath) {
-    return md5.convert(File(filePath).readAsBytesSync()).toString();
+    if (_hashMap.containsKey(filePath)) {
+      _hashMap[filePath]!;
+    }
+
+    final hash = md5.convert(File(filePath).readAsBytesSync()).toString();
+    return _hashMap[filePath] = hash;
   }
 
   static String calculateTestFileDigestFor(List<String> dependencies) {
@@ -65,7 +72,7 @@ abstract class Utils {
   }
 
   static void logHeader(String title) {
-    Logger.log('\n---------------------- $title ----------------------');
+    Logger.log('\n---------------------- $title ----------------------', fatal: true);
   }
 
   static String getFileName(String path) {
