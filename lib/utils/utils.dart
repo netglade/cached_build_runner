@@ -9,6 +9,7 @@ abstract class Utils {
   static String projectDirectory = '';
   static bool isVerbose = true;
   static bool generateTestMocks = false;
+  static bool isRedisUsed = false;
 
   static String calculateDigestForString(String value) {
     return md5.convert(utf8.encode(value)).toString();

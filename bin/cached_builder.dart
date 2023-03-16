@@ -9,6 +9,7 @@ import 'package:cached_builder/utils/utils.dart';
 /// parser argument flags & options
 const help = 'help';
 const verbose = 'verbose';
+const useRedis = 'redis';
 const generateTestMocks = 'generate-test-mock';
 const cacheDirectory = 'cache-directory';
 const projectDirectory = 'project-directory';
@@ -23,8 +24,8 @@ Future<void> main(List<String> arguments) async {
   Directory(Utils.appCacheDirectory).createSync(recursive: true);
 
   /// initialize the database
-  final databaseService = HiveDatabaseService();
-  await databaseService.init(Utils.appCacheDirectory);
+  final databaseService = Utils.isRedisUsed ? RedisDatabaseService() : HiveDatabaseService(Utils.appCacheDirectory);
+  await databaseService.init();
 
   /// let's initiate the build
   final buildCache = build_cache.BuildCache(databaseService);
@@ -44,8 +45,19 @@ void _parseArgs(List<String> args) {
       help: 'Generates mocks for test files, if this flag is not provided mock generations are skipped.',
       negatable: false,
     )
+    ..addFlag(
+      useRedis,
+      abbr: 'r',
+      help: 'Use redis database, if installed on the system, using redis allows multiple instance access',
+      negatable: false,
+    )
     ..addSeparator('')
-    ..addOption(cacheDirectory, abbr: 'c', help: 'Provide the directory where this tool can keep the caches.')
+    ..addOption(
+      cacheDirectory,
+      abbr: 'c',
+      help:
+          'Provide the directory where this tool can keep the caches. If redis (or, -r) option is used providing a cache directory is obsolete.',
+    )
     ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project');
 
   final result = parser.parse(args);
@@ -75,4 +87,5 @@ ${parser.usage}
 
   Utils.isVerbose = result.wasParsed(verbose);
   Utils.generateTestMocks = result.wasParsed(generateTestMocks);
+  Utils.isRedisUsed = result.wasParsed(useRedis);
 }

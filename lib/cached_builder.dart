@@ -27,7 +27,7 @@ class BuildCache {
     /// good files -> files for whom the generated codes are available
     /// bad files -> files for whom no generated codes are available in the cache
     for (final file in files) {
-      final isGeneratedCodeAvailable = _databaseService.isMappingAvailable(file.digest);
+      final isGeneratedCodeAvailable = await _databaseService.isMappingAvailable(file.digest);
 
       /// mock generated files are always considered badFiles,
       /// as they depends on various services, and to keep track of changes can become complicated
@@ -47,10 +47,10 @@ class BuildCache {
     /// let's handle the good files - by copying the cached generated files to appropriate path
     /// we pass in the bad files as well, in case the good files could not be copied,
     /// they become bad files - though this should NOT happen, still a safe mechanism to avoid complete error
-    _copyGeneratedCodesFor(goodFiles, badFiles);
+    await _copyGeneratedCodesFor(goodFiles, badFiles);
 
     /// at last, let's cache the bad files - they may be required next time
-    _cacheGeneratedCodesFor(badFiles);
+    await _cacheGeneratedCodesFor(badFiles);
 
     /// let's flush Hive, to make sure everything is committed to disk
     await _databaseService.flush();
@@ -58,11 +58,11 @@ class BuildCache {
     /// We are done, probably?
   }
 
-  void _copyGeneratedCodesFor(List<CodeFile> files, List<CodeFile> badFiles) {
+  Future<void> _copyGeneratedCodesFor(List<CodeFile> files, List<CodeFile> badFiles) async {
     Utils.logHeader('COPYING CACHED GENERATED CODES');
 
     for (final file in files) {
-      final cachedGeneratedCodePath = _databaseService.getCachedFilePath(file.digest);
+      final cachedGeneratedCodePath = await _databaseService.getCachedFilePath(file.digest);
       Logger.log('Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}');
 
       final process = Process.runSync(
@@ -212,7 +212,7 @@ class BuildCache {
   }
 
   /// copies the generated files to cache directory, and make an entry in database
-  void _cacheGeneratedCodesFor(List<CodeFile> files) async {
+  Future<void> _cacheGeneratedCodesFor(List<CodeFile> files) async {
     Utils.logHeader('CACHING NEWLY GENERATED CODES (${files.length})');
 
     for (final file in files) {
