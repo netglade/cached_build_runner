@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cached_builder/utils/log.dart';
 import 'package:hive/hive.dart';
+import 'package:path/path.dart' as path;
 import 'package:redis/redis.dart';
+
+import '../utils/log.dart';
+import '../utils/utils.dart';
 
 abstract class DatabaseService {
   Future<void> init();
@@ -31,6 +34,8 @@ class RedisDatabaseService implements DatabaseService {
 
   @override
   Future<void> flush() async {
+    /// a short delay to make sure all network connections are done before we close the connection
+    await Utils.delay500ms();
     _command.pipe_end();
     await _connection.close();
   }
@@ -45,22 +50,31 @@ class RedisDatabaseService implements DatabaseService {
     return data;
   }
 
+  File _generateConfigurationFile() {
+    final configuration = """
+# Redis configuration file
+
+# Specify the directory where Redis will store its data
+dir ${Utils.appCacheDirectory}
+""";
+
+    final configurationFile = File(path.join(Utils.appCacheDirectory, 'redis.conf'));
+    configurationFile.writeAsStringSync(configuration);
+    return configurationFile;
+  }
+
   @override
   Future<void> init() async {
+    final configurationPath = _generateConfigurationFile();
     _connection = RedisConnection();
     try {
       _command = await _connection.connect(_redisHost, _redisPort);
     } on SocketException catch (_) {
-      final process = await Process.start(
-        'redis-server',
-        const [
-          /// TODO: let's add a redis config
-        ],
-      );
+      final process = await Process.start('redis-server', [configurationPath.path]);
       Logger.log('Redis started with PID ${process.pid}');
 
       /// assumption: redis would fire up within this delayed duration
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Utils.delay500ms();
       _command = await _connection.connect(_redisHost, _redisPort);
     }
 

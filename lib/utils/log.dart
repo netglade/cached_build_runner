@@ -1,4 +1,4 @@
-import 'package:cached_builder/utils/utils.dart';
+import 'utils.dart';
 
 class Logger {
   static log(String message, {bool fatal = false}) {

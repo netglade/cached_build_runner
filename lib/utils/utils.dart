@@ -79,4 +79,8 @@ abstract class Utils {
   static String getFileName(String path) {
     return path.split('/').last;
   }
+
+  static Future<void> delay500ms() {
+    return Future.delayed(const Duration(milliseconds: 500));
+  }
 }
