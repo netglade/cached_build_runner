@@ -19,7 +19,6 @@ class HiveDatabaseService implements DatabaseService {
   @override
   Future<void> init(String dirPath) async {
     Hive.init(dirPath);
-    Hive.init(Utils.appCacheDirectory);
     _box = await Hive.openBox<String>(_boxName);
   }
 
