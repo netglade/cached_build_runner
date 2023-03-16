@@ -38,7 +38,7 @@ Future<void> main(List<String> arguments) async {
 void _parseArgs(List<String> args) {
   final parser = ArgParser()
     ..addFlag(help, abbr: 'h', help: 'Print out usage instructions.', negatable: false)
-    ..addFlag(verbose, abbr: 'v', help: 'Prints out logs during build_runner build', negatable: false)
+    ..addFlag(verbose, abbr: 'v', help: 'Prints out logs during build_runner build.', negatable: false)
     ..addFlag(
       generateTestMocks,
       abbr: 't',
@@ -48,23 +48,23 @@ void _parseArgs(List<String> args) {
     ..addFlag(
       useRedis,
       abbr: 'r',
-      help: 'Use redis database, if installed on the system, using redis allows multiple instance access',
+      help:
+          'Use redis database, if installed on the system. Using redis allows multiple instance access. Ideal for usage in pipelines. Default implementation uses a file system storage (hive), which is idea for usage in local systems.',
       negatable: false,
     )
     ..addSeparator('')
     ..addOption(
       cacheDirectory,
       abbr: 'c',
-      help:
-          'Provide the directory where this tool can keep the caches. If redis (or, -r) option is used providing a cache directory is obsolete.',
+      help: 'Mandatory: Provide the directory where this tool can keep the caches.',
     )
-    ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project');
+    ..addOption(projectDirectory, abbr: 'p', help: 'Mandatory: Provide the directory of the project.');
 
   final result = parser.parse(args);
 
   if (result.wasParsed(help)) {
     Logger.log('''
-cached_build_runner: Helps to optimize the build_runner by caching generated codes for non changed .dart files
+cached_build_runner: Optimizes the build_runner by caching generated codes for non changed .dart files.
 
 ${parser.usage}
 ''');

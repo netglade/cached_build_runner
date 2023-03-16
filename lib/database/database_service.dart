@@ -51,8 +51,16 @@ class RedisDatabaseService implements DatabaseService {
     try {
       _command = await _connection.connect(_redisHost, _redisPort);
     } on SocketException catch (_) {
-      final process = await Process.start('redis-server', const []);
+      final process = await Process.start(
+        'redis-server',
+        const [
+          /// TODO: let's add a redis config
+        ],
+      );
       Logger.log('Redis started with PID ${process.pid}');
+
+      /// assumption: redis would fire up within this delayed duration
+      await Future.delayed(const Duration(milliseconds: 500));
       _command = await _connection.connect(_redisHost, _redisPort);
     }
 
