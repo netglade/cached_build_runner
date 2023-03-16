@@ -70,7 +70,11 @@ dir ${Utils.appCacheDirectory}
     try {
       _command = await _connection.connect(_redisHost, _redisPort);
     } on SocketException catch (_) {
-      final process = await Process.start('redis-server', [configurationPath.path]);
+      final process = await Process.start(
+        'redis-server',
+        [configurationPath.path],
+        mode: ProcessStartMode.detached,
+      );
       Logger.log('Redis started with PID ${process.pid}');
 
       /// assumption: redis would fire up within this delayed duration
