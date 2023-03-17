@@ -66,18 +66,7 @@ class BuildCache {
     for (final file in files) {
       final cachedGeneratedCodePath = await _databaseService.getCachedFilePath(file.digest);
       Logger.log('Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}');
-
-      final process = Process.runSync(
-        'cp',
-        [
-          cachedGeneratedCodePath,
-          _getGeneratedFilePathFrom(file),
-        ],
-      );
-
-      if (process.stderr.toString().isNotEmpty) {
-        Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}', fatal: true);
-      }
+      File(cachedGeneratedCodePath).copySync(_getGeneratedFilePathFrom(file));
 
       /// check if the file was copied successfully
       if (!File(_getGeneratedFilePathFrom(file)).existsSync()) {
@@ -174,7 +163,7 @@ class BuildCache {
     for (final files in _formatOutput(grepOutput)) {
       codeFiles.add(
         CodeFile(
-          path: files[0],
+          path: files[0].trim(),
           digest: Utils.calculateTestFileDigestFor(files),
           isTestFile: true,
         ),
@@ -206,7 +195,7 @@ class BuildCache {
     return libPathList
         .map<CodeFile>(
           (path) => CodeFile(
-            path: path,
+            path: path.trim(),
             digest: Utils.calculateDigestFor(path),
           ),
         )
@@ -220,17 +209,7 @@ class BuildCache {
     for (final file in files) {
       Logger.log('Caching generated code for: ${Utils.getFileName(file.path)}');
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
-      final process = Process.runSync(
-        'cp',
-        [
-          _getGeneratedFilePathFrom(file),
-          cachedFilePath,
-        ],
-      );
-
-      if (process.stderr.toString().isNotEmpty) {
-        Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}', fatal: true);
-      }
+      File(_getGeneratedFilePathFrom(file)).copySync(cachedFilePath);
 
       final cacheEntry = <String, String>{};
 
