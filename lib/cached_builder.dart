@@ -18,16 +18,18 @@ class BuildCache {
 
     final libFiles = _fetchFilePathsFromLib();
     final testFiles = await _fetchFilePathsFromTest();
-    final files = List.from(libFiles)..addAll(testFiles);
+    final files = List<CodeFile>.from(libFiles)..addAll(testFiles);
 
     final List<CodeFile> goodFiles = [];
     final List<CodeFile> badFiles = [];
+
+    final bulkMapping = await _databaseService.isMappingAvailableForBulk(files.map((f) => f.digest));
 
     /// segregate good and bad files
     /// good files -> files for whom the generated codes are available
     /// bad files -> files for whom no generated codes are available in the cache
     for (final file in files) {
-      final isGeneratedCodeAvailable = await _databaseService.isMappingAvailable(file.digest);
+      final isGeneratedCodeAvailable = bulkMapping[file.digest] == true;
 
       /// mock generated files are always considered badFiles,
       /// as they depends on various services, and to keep track of changes can become complicated
@@ -109,7 +111,7 @@ class BuildCache {
   /// to only generate the required codes, thus avoiding unnecessary builds
   void _generateCodesFor(List<CodeFile> files) {
     Utils.logHeader(
-      'GENERATING CODES FOR BAD FILES (${files.length})',
+      'GENERATING CODES FOR NON-CACHED FILES (${files.length})',
     );
 
     if (files.isEmpty) return;
@@ -230,12 +232,17 @@ class BuildCache {
         Logger.log('ERROR: _copyGeneratedCodesFor: ${process.stderr}', fatal: true);
       }
 
+      final cacheEntry = <String, String>{};
+
       /// if file has been successfully copied, let's make an entry to the db
       if (File(cachedFilePath).existsSync()) {
-        await _databaseService.createEntry(file.digest, cachedFilePath);
+        cacheEntry[file.digest] = cachedFilePath;
       } else {
         Logger.log('ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file', fatal: true);
       }
+
+      /// create a bulk entry
+      await _databaseService.createEntryForBulk(cacheEntry);
     }
   }
 }

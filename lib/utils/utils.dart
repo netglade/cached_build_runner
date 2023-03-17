@@ -83,4 +83,8 @@ abstract class Utils {
   static Future<void> delay500ms() {
     return Future.delayed(const Duration(milliseconds: 500));
   }
+
+  static Future<void> delay100ms() {
+    return Future.delayed(const Duration(milliseconds: 100));
+  }
 }
