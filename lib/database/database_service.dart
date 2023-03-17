@@ -10,9 +10,16 @@ import '../utils/utils.dart';
 
 abstract class DatabaseService {
   Future<void> init();
+
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests);
   FutureOr<bool> isMappingAvailable(String digest);
+
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests);
   FutureOr<String> getCachedFilePath(String digest);
+
+  Future<void> createEntryForBulk(Map<String, String> cachedFilePaths);
   Future<void> createEntry(String digest, String cachedFilePath);
+
   Future<void> flush();
 }
 
@@ -35,7 +42,7 @@ class RedisDatabaseService implements DatabaseService {
   @override
   Future<void> flush() async {
     /// a short delay to make sure all network connections are done before we close the connection
-    await Utils.delay500ms();
+    await Utils.delay100ms();
     _command.pipe_end();
     await _connection.close();
   }
@@ -99,6 +106,70 @@ save 60 1
 
     return false;
   }
+
+  @override
+  Future<void> createEntryForBulk(Map<String, String> cachedFilePaths) async {
+    final transaction = await _command.multi();
+    final futures = <Future<dynamic>>[];
+
+    for (final cache in cachedFilePaths.entries) {
+      futures.add(transaction.set(cache.key, cache.value));
+    }
+
+    final response = await transaction.exec();
+    if (response.toString() == 'OK') {
+      await Future.wait(futures);
+    } else {
+      throw Exception('$_tag: createEntryForBulk: Redis Error $response');
+    }
+  }
+
+  @override
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests) {
+    for (final digest in digests) {
+      if (!_cache.containsKey(digest)) {
+        throw Exception('$_tag: getCachedFilePathForBulk: asked path for non existing digest: $digest');
+      }
+    }
+    return _cache;
+  }
+
+  Future<Map<String, String?>> _waitMapFutures(Map<String, Future<dynamic>> map) async {
+    final result = <String, String?>{};
+    final keys = map.keys.toList();
+    final values = await Future.wait(map.values);
+    for (int i = 0; i < keys.length; i++) {
+      result[keys[i]] = values[i];
+    }
+    return result;
+  }
+
+  @override
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests) async {
+    final transaction = await _command.multi();
+
+    final futures = <String, Future<dynamic>>{};
+
+    for (final digest in digests) {
+      futures[digest] = transaction.get(digest);
+    }
+
+    late Map<String, String?> data;
+
+    final response = await transaction.exec();
+    if (response.toString() == 'OK') {
+      data = await _waitMapFutures(futures);
+
+      _cache.clear();
+      for (var entry in data.entries) {
+        if (entry.value != null) _cache[entry.key] = entry.value!;
+      }
+    } else {
+      throw Exception('$_tag: isMappingAvailableForBulk: Redis Error $response');
+    }
+
+    return data.map((key, value) => MapEntry(key, value != null));
+  }
 }
 
 class HiveDatabaseService implements DatabaseService {
@@ -140,5 +211,32 @@ class HiveDatabaseService implements DatabaseService {
   @override
   Future<void> flush() {
     return _box.flush();
+  }
+
+  @override
+  Future<void> createEntryForBulk(Map<String, String> cachedFilePaths) {
+    return _box.putAll(cachedFilePaths);
+  }
+
+  @override
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests) {
+    final Map<String, String> data = {};
+
+    for (final digest in digests) {
+      data[digest] = getCachedFilePath(digest) as String;
+    }
+
+    return data;
+  }
+
+  @override
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests) {
+    final Map<String, bool> data = {};
+
+    for (final digest in digests) {
+      data[digest] = isMappingAvailable(digest) as bool;
+    }
+
+    return data;
   }
 }
