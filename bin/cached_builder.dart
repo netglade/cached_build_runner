@@ -23,6 +23,9 @@ Future<void> main(List<String> arguments) async {
   /// let's make the appCacheDirectory if not existing already
   Directory(Utils.appCacheDirectory).createSync(recursive: true);
 
+  /// init package name of project
+  Utils.initAppPackageName();
+
   /// initialize the database
   final databaseService = Utils.isRedisUsed ? RedisDatabaseService() : HiveDatabaseService(Utils.appCacheDirectory);
   await databaseService.init();
