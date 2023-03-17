@@ -159,7 +159,13 @@ class BuildCache {
       ['-r', '-M', "(?s)@GenerateMocks(.*?)]", path.join(Utils.projectDirectory, 'test')],
       runInShell: true,
     );
+
+    if (pcregrepProcess.stderr.toString().isNotEmpty) {
+      throw Exception('_fetchFilePathsFromTest :: failed to run pcregrepProcess :: ${pcregrepProcess.stderr}');
+    }
+
     final grepOutput = pcregrepProcess.stdout.toString();
+
     for (final files in _formatOutput(grepOutput)) {
       codeFiles.add(
         CodeFile(
@@ -182,12 +188,20 @@ class BuildCache {
 
     final libProcess = Process.runSync(
       'grep',
-      ['-r', '-l', '-E', libRegExp.pattern, path.join(Utils.projectDirectory, 'lib')],
+      [
+        '-r',
+        '-l',
+        '-E',
+        libRegExp.pattern,
+        '--include=*.dart',
+        '--exclude=*.g.dart',
+        path.join(Utils.projectDirectory, 'lib'),
+      ],
       runInShell: true,
     );
 
-    final libPathList = libProcess.stdout.toString().split("\n").where(
-          (line) => line.isNotEmpty && !line.endsWith(".g.dart"),
+    final libPathList = libProcess.stdout.toString().split('\n').where(
+          (line) => line.isNotEmpty,
         );
 
     Logger.log('Found ${libPathList.length} files in "lib/" that needs code generation');

@@ -42,7 +42,6 @@ class RedisDatabaseService implements DatabaseService {
   @override
   Future<void> flush() async {
     /// a short delay to make sure all network connections are done before we close the connection
-    await Utils.delay100ms();
     _command.pipe_end();
     await _connection.close();
   }
