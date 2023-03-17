@@ -56,6 +56,10 @@ class RedisDatabaseService implements DatabaseService {
 
 # Specify the directory where Redis will store its data
 dir ${Utils.appCacheDirectory}
+
+# Specify the save duration to disk: save <seconds> <changes>
+# this saves to disk every 1 min if at least 1 key has changed
+save 60 1
 """;
 
     final configurationFile = File(path.join(Utils.appCacheDirectory, 'redis.conf'));
