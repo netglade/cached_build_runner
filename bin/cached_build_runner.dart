@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:cached_builder/cached_builder.dart' as build_cache;
-import 'package:cached_builder/database/database_service.dart';
-import 'package:cached_builder/utils/log.dart';
-import 'package:cached_builder/utils/utils.dart';
+import 'package:cached_build_runner/cached_build_runner.dart' as cached_build_runner;
+import 'package:cached_build_runner/database/database_service.dart';
+import 'package:cached_build_runner/utils/log.dart';
+import 'package:cached_build_runner/utils/utils.dart';
 
 /// parser argument flags & options
 const help = 'help';
@@ -15,8 +15,6 @@ const cacheDirectory = 'cache-directory';
 const projectDirectory = 'project-directory';
 
 Future<void> main(List<String> arguments) async {
-  final startTime = DateTime.now();
-
   /// parse args
   _parseArgs(arguments);
 
@@ -31,11 +29,8 @@ Future<void> main(List<String> arguments) async {
   await databaseService.init();
 
   /// let's initiate the build
-  final buildCache = build_cache.BuildCache(databaseService);
+  final buildCache = cached_build_runner.CachedBuildRunner(databaseService);
   await buildCache.build();
-
-  final timeTook = DateTime.now().difference(startTime);
-  Utils.logHeader('Code Generation took: $timeTook');
 }
 
 void _parseArgs(List<String> args) {
@@ -77,15 +72,15 @@ ${parser.usage}
   if (result.wasParsed(cacheDirectory)) {
     Utils.appCacheDirectory = result[cacheDirectory];
   } else {
-    Logger.log('Please provide a cache directory for the tool. Check -h or --help for more details.');
-    exit(0);
+    Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
+    Logger.log("As no '$cacheDirectory' was specified, using the default directory: ${Utils.appCacheDirectory}");
   }
 
   if (result.wasParsed(projectDirectory)) {
     Utils.projectDirectory = result[projectDirectory];
   } else {
-    Logger.log('Please provide a project directory. Check -h or --help for more details.');
-    exit(0);
+    Utils.projectDirectory = Utils.getDefaultProjectDirectory();
+    Logger.log("As no '$projectDirectory' was specified, using the current directory.");
   }
 
   Utils.isVerbose = result.wasParsed(verbose);

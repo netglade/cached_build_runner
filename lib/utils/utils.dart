@@ -116,4 +116,28 @@ abstract class Utils {
   static Future<void> delay500ms() {
     return Future.delayed(const Duration(milliseconds: 500));
   }
+
+  static String getDefaultCacheDirectory() {
+    const defaultCacheDirectoryName = '.cached_build_runner';
+    String homeDir;
+
+    if (Platform.isWindows) {
+      homeDir = Platform.environment['USERPROFILE'] ?? '';
+    } else {
+      homeDir = Platform.environment['HOME'] ?? '';
+    }
+
+    if (homeDir.isEmpty) {
+      throw Exception(
+        'Could not set default cache directory. Please use the --cache-directory flag to provide a cache directory.',
+      );
+    }
+
+    return path.join(path.normalize(homeDir), defaultCacheDirectoryName);
+  }
+
+  /// default project directory is the current directory
+  static String getDefaultProjectDirectory() {
+    return Directory.current.path;
+  }
 }

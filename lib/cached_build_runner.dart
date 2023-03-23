@@ -7,10 +7,10 @@ import 'model/code_file.dart';
 import 'utils/log.dart';
 import 'utils/utils.dart';
 
-class BuildCache {
+class CachedBuildRunner {
   final DatabaseService _databaseService;
 
-  BuildCache(this._databaseService);
+  CachedBuildRunner(this._databaseService);
 
   /// this method runs an efficient version of `build_runner build`
   Future<void> build() async {
