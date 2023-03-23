@@ -11,13 +11,14 @@
             "program": "bin/cached_builder.dart",
             "args": [
                 "-c",
-                "/Users/jyotirmoypaul/.build_cache",
+                "/Users/jyotirmoypaul/.build_cache_dev",
                 "-p",
 			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
                 "-v",
                 "-t",
                 "-r",
-            ]
+            ],
+            "preLaunchTask": "killRedisServer"
         }
-    ]
+    ],
 }
