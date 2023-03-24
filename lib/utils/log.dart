@@ -28,8 +28,8 @@ class Logger {
     ),
   );
 
-  static v(String message) {
-    _logger.v('│ $message');
+  static v(String message, {bool showPrefix = true}) {
+    _logger.v('${showPrefix ? '│ ' : ''}$message');
   }
 
   static i(String message) {

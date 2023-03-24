@@ -108,7 +108,7 @@ class CachedBuildRunner {
     /// flutter pub run build_runner build --build-filter="..." -d
     /// where ... contains the list of files that needs generation
 
-    Logger.v('Running build_runner build...');
+    Logger.v('Running build_runner build...', showPrefix: false);
     final process = Process.runSync(
       'flutter',
       [
@@ -127,48 +127,47 @@ class CachedBuildRunner {
       throw Exception('_generateCodesFor :: failed to run build_runner build :: ${process.stderr}');
     }
 
-    Logger.v(process.stdout);
-  }
-
-  final _generateMocksFormattingRegex = RegExp(r'(.*?):@GenerateMocks\(\[(.*?)\]\)', dotAll: true);
-
-  List<List<String>> _formatOutput(String input) {
-    final matches = _generateMocksFormattingRegex.allMatches(input);
-    final List<List<String>> output = [];
-
-    for (final match in matches) {
-      if (match.groupCount >= 2) {
-        final filePath = match.group(1) ?? '';
-        final dependencies = match.group(2) ?? '';
-
-        output.add([filePath.trim(), ...dependencies.split(',').map((s) => s.trim())]);
-      }
-    }
-
-    return output;
+    Logger.v(process.stdout.trim(), showPrefix: false);
   }
 
   Future<List<CodeFile>> _fetchFilePathsFromTest() async {
     if (!Utils.generateTestMocks) return const [];
 
     final List<CodeFile> codeFiles = [];
+    final searchString = 'package:${Utils.appPackageName}/';
 
-    final pcregrepProcess = Process.runSync(
-      'pcregrep',
-      ['-r', '-M', "(?s)@GenerateMocks(.*?)]", path.join(Utils.projectDirectory, 'test')],
-      runInShell: true,
-    );
+    final List<List<String>> testFiles = [];
 
-    if (pcregrepProcess.stderr.toString().isNotEmpty) {
-      throw Exception('_fetchFilePathsFromTest :: failed to run pcregrepProcess :: ${pcregrepProcess.stderr}');
+    for (FileSystemEntity entity in Directory(path.join(Utils.projectDirectory, 'test')).listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      final List<String> dependencies = [];
+
+      if (entity is File) {
+        final filePath = entity.path.trim();
+        final fileContent = entity.readAsStringSync();
+
+        /// if the file doesn't contain `@Generate` string, meaning no annotation for generations were marked
+        /// thus we can safely assume we don't need to generate mocks for those files
+        if (!fileContent.contains('@Generate')) continue;
+
+        dependencies.add(filePath);
+        for (final fileLine in entity.readAsLinesSync()) {
+          if (fileLine.contains(searchString)) {
+            dependencies.add(Utils.getFilePathFromImportLine(fileLine));
+          }
+        }
+
+        /// add to the dependencies list, only if there are test files that has dependencies
+        if (dependencies.length > 1) testFiles.add(dependencies);
+      }
     }
 
-    final grepOutput = pcregrepProcess.stdout.toString();
-
-    for (final files in _formatOutput(grepOutput)) {
+    for (final files in testFiles) {
       codeFiles.add(
         CodeFile(
-          path: files[0].trim(),
+          path: files[0],
           digest: Utils.calculateTestFileDigestFor(files),
           isTestFile: true,
         ),
