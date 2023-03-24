@@ -5,16 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cached_builder",
+            "name": "cached_build_runner",
             "request": "launch",
             "type": "dart",
-            "program": "bin/cached_builder.dart",
+            "program": "bin/cached_build_runner.dart",
             "args": [
                 "-c",
-                "/Users/jyotirmoypaul/.build_cache_dev",
+                "/Users/jyotirmoypaul/.cached_build_runner_dev",
                 "-p",
 			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
-                "-v",
                 "-t",
                 "-r",
             ],

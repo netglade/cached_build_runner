@@ -39,66 +39,26 @@ abstract class Utils {
     return _hashMap[filePath] = hash;
   }
 
-  static List<String> _filesToSearchIn(String originFile) {
+  static String getFilePathFromImportLine(String importLine) {
     final searchString = 'package:$appPackageName/';
-    final content = File(originFile).readAsLinesSync();
 
-    final paths = <String>[];
+    final fromIndex = importLine.indexOf(searchString) + searchString.length;
+    int toIndex = importLine.lastIndexOf("'");
+    if (toIndex == -1) toIndex = importLine.lastIndexOf('"');
 
-    for (final line in content) {
-      if (line.contains(searchString)) {
-        final i = line.indexOf(searchString) + searchString.length;
-        final dependency = line.substring(i, line.length - 2);
-        paths.add(path.join(Utils.projectDirectory, 'lib', dependency));
-      }
-    }
-
-    return paths;
+    final dependency = importLine.substring(fromIndex, toIndex);
+    return path.join(Utils.projectDirectory, 'lib', dependency).trim();
   }
 
   static String calculateTestFileDigestFor(List<String> dependencies) {
-    assert(dependencies.isNotEmpty);
-
-    final originFile = dependencies[0];
-    List<String> dependentFilePaths = [originFile];
-
-    for (final dependency in dependencies.sublist(1)) {
-      if (dependency.trim().isEmpty) continue;
-      final process = Process.runSync(
-        'grep',
-        [
-          '-rl',
-          '-w',
-          'class ${dependency.trim()}',
-          ..._filesToSearchIn(originFile),
-        ],
-      );
-
-      if (process.stderr.toString().isNotEmpty) {
-        throw Exception('Utils.calculateTestFileDigestFor :: failed to run grep :: ${process.stderr}');
-      }
-
-      final filePath = process.stdout.toString().trim();
-      if (filePath.isNotEmpty) {
-        dependentFilePaths.add(filePath);
-      } else {
-        /// file is not present in our repo, but is from an external package
-        dependentFilePaths.add(dependency.trim());
-      }
+    if (dependencies.isEmpty) {
+      throw Exception('Dependencies list cannot be empty when invoked to generate digest');
     }
 
     final sb = StringBuffer();
 
-    for (final file in dependentFilePaths) {
-      /// an file exist check is needed because we may be depending on external packages
-      /// which needs mock generations, now those files doesn't exists in our repo,
-      /// but we need to make sure they needs to be generated
-      if (File(file).existsSync()) {
-        sb.write(calculateDigestFor(file));
-      } else {
-        sb.write(calculateDigestForString(file));
-      }
-
+    for (final file in dependencies) {
+      sb.write(calculateDigestFor(file));
       sb.write('-');
     }
 
@@ -106,7 +66,7 @@ abstract class Utils {
   }
 
   static void logHeader(String title) {
-    Logger.log('\n---------------------- $title ----------------------', fatal: true);
+    Logger.i(title);
   }
 
   static String getFileName(String path) {
@@ -115,5 +75,29 @@ abstract class Utils {
 
   static Future<void> delay500ms() {
     return Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  static String getDefaultCacheDirectory() {
+    const defaultCacheDirectoryName = '.cached_build_runner';
+    String homeDir;
+
+    if (Platform.isWindows) {
+      homeDir = Platform.environment['USERPROFILE'] ?? '';
+    } else {
+      homeDir = Platform.environment['HOME'] ?? '';
+    }
+
+    if (homeDir.isEmpty) {
+      throw Exception(
+        'Could not set default cache directory. Please use the --cache-directory flag to provide a cache directory.',
+      );
+    }
+
+    return path.join(path.normalize(homeDir), defaultCacheDirectoryName);
+  }
+
+  /// default project directory is the current directory
+  static String getDefaultProjectDirectory() {
+    return Directory.current.path;
   }
 }
