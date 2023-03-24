@@ -85,7 +85,7 @@ save 60 1
         [configurationPath.path],
         mode: ProcessStartMode.detached,
       );
-      Logger.log('Redis started with PID ${process.pid}');
+      Logger.v('Redis started with PID ${process.pid}');
 
       /// assumption: redis would fire up within this delayed duration
       await Utils.delay500ms();

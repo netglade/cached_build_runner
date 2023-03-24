@@ -14,7 +14,7 @@ class CachedBuildRunner {
 
   /// this method runs an efficient version of `build_runner build`
   Future<void> build() async {
-    Utils.logHeader('DETERMINING FILES THAT NEEDS GENERATION');
+    Utils.logHeader('Determining Files that needs code generation');
 
     final libFiles = _fetchFilePathsFromLib();
     final testFiles = await _fetchFilePathsFromTest();
@@ -40,8 +40,8 @@ class CachedBuildRunner {
       }
     }
 
-    Logger.log('No. of cached files: ${goodFiles.length}');
-    Logger.log('No. of non-cached files: ${badFiles.length}');
+    Logger.v('No. of cached files: ${goodFiles.length}');
+    Logger.v('No. of non-cached files: ${badFiles.length}');
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     _generateCodesFor(badFiles);
@@ -61,16 +61,16 @@ class CachedBuildRunner {
   }
 
   Future<void> _copyGeneratedCodesFor(List<CodeFile> files, List<CodeFile> badFiles) async {
-    Utils.logHeader('COPYING CACHED GENERATED CODES');
+    Utils.logHeader('Copying cached codes to project directory');
 
     for (final file in files) {
       final cachedGeneratedCodePath = await _databaseService.getCachedFilePath(file.digest);
-      Logger.log('Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}');
+      Logger.v('Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}');
       File(cachedGeneratedCodePath).copySync(_getGeneratedFilePathFrom(file));
 
       /// check if the file was copied successfully
       if (!File(_getGeneratedFilePathFrom(file)).existsSync()) {
-        Logger.log('ERROR: _copyGeneratedCodesFor: failed to copy the cached file $file', fatal: true);
+        Logger.e('ERROR: _copyGeneratedCodesFor: failed to copy the cached file $file');
         badFiles.add(file);
       }
     }
@@ -99,9 +99,8 @@ class CachedBuildRunner {
   /// this method runs build_runner build method with --build-filter
   /// to only generate the required codes, thus avoiding unnecessary builds
   void _generateCodesFor(List<CodeFile> files) {
-    Utils.logHeader(
-      'GENERATING CODES FOR NON-CACHED FILES (${files.length})',
-    );
+    if (files.isEmpty) return;
+    Utils.logHeader('Generating Codes for non-cached files, found ${files.length} files');
 
     if (files.isEmpty) return;
 
@@ -109,7 +108,7 @@ class CachedBuildRunner {
     /// flutter pub run build_runner build --build-filter="..." -d
     /// where ... contains the list of files that needs generation
 
-    Logger.log('Running build_runner build...');
+    Logger.v('Running build_runner build...');
     final process = Process.runSync(
       'flutter',
       [
@@ -128,7 +127,7 @@ class CachedBuildRunner {
       throw Exception('_generateCodesFor :: failed to run build_runner build :: ${process.stderr}');
     }
 
-    Logger.log(process.stdout);
+    Logger.v(process.stdout);
   }
 
   final _generateMocksFormattingRegex = RegExp(r'(.*?):@GenerateMocks\(\[(.*?)\]\)', dotAll: true);
@@ -176,7 +175,7 @@ class CachedBuildRunner {
       );
     }
 
-    Logger.log('Found ${codeFiles.length} files in "test/" that needs code generation');
+    Logger.v('Found ${codeFiles.length} files in "test/" that needs code generation');
 
     return codeFiles;
   }
@@ -204,7 +203,7 @@ class CachedBuildRunner {
           (line) => line.isNotEmpty,
         );
 
-    Logger.log('Found ${libPathList.length} files in "lib/" that needs code generation');
+    Logger.v('Found ${libPathList.length} files in "lib/" that needs code generation');
 
     return libPathList
         .map<CodeFile>(
@@ -218,10 +217,12 @@ class CachedBuildRunner {
 
   /// copies the generated files to cache directory, and make an entry in database
   Future<void> _cacheGeneratedCodesFor(List<CodeFile> files) async {
-    Utils.logHeader('CACHING NEWLY GENERATED CODES (${files.length})');
+    if (files.isEmpty) return;
+
+    Utils.logHeader('Caching new generated codes, caching ${files.length} files');
 
     for (final file in files) {
-      Logger.log('Caching generated code for: ${Utils.getFileName(file.path)}');
+      Logger.v('Caching generated code for: ${Utils.getFileName(file.path)}');
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       File(_getGeneratedFilePathFrom(file)).copySync(cachedFilePath);
 
@@ -231,7 +232,7 @@ class CachedBuildRunner {
       if (File(cachedFilePath).existsSync()) {
         cacheEntry[file.digest] = cachedFilePath;
       } else {
-        Logger.log('ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file', fatal: true);
+        Logger.e('ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file');
       }
 
       /// create a bulk entry

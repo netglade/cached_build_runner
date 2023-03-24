@@ -8,7 +8,7 @@ import 'package:cached_build_runner/utils/utils.dart';
 
 /// parser argument flags & options
 const help = 'help';
-const verbose = 'verbose';
+const quiet = 'quiet';
 const useRedis = 'redis';
 const generateTestMocks = 'generate-test-mock';
 const cacheDirectory = 'cache-directory';
@@ -36,7 +36,7 @@ Future<void> main(List<String> arguments) async {
 void _parseArgs(List<String> args) {
   final parser = ArgParser()
     ..addFlag(help, abbr: 'h', help: 'Print out usage instructions.', negatable: false)
-    ..addFlag(verbose, abbr: 'v', help: 'Prints out logs during build_runner build.', negatable: false)
+    ..addFlag(quiet, abbr: 'q', help: 'Disables printing out logs during build.', negatable: false)
     ..addFlag(
       generateTestMocks,
       abbr: 't',
@@ -54,14 +54,14 @@ void _parseArgs(List<String> args) {
     ..addOption(
       cacheDirectory,
       abbr: 'c',
-      help: 'Mandatory: Provide the directory where this tool can keep the caches.',
+      help: 'Provide the directory where this tool can keep the caches.',
     )
-    ..addOption(projectDirectory, abbr: 'p', help: 'Mandatory: Provide the directory of the project.');
+    ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project.');
 
   final result = parser.parse(args);
 
   if (result.wasParsed(help)) {
-    Logger.log('''
+    Logger.i('''
 cached_build_runner: Optimizes the build_runner by caching generated codes for non changed .dart files.
 
 ${parser.usage}
@@ -73,17 +73,17 @@ ${parser.usage}
     Utils.appCacheDirectory = result[cacheDirectory];
   } else {
     Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
-    Logger.log("As no '$cacheDirectory' was specified, using the default directory: ${Utils.appCacheDirectory}");
+    Logger.i("As no '$cacheDirectory' was specified, using the default directory: ${Utils.appCacheDirectory}");
   }
 
   if (result.wasParsed(projectDirectory)) {
     Utils.projectDirectory = result[projectDirectory];
   } else {
     Utils.projectDirectory = Utils.getDefaultProjectDirectory();
-    Logger.log("As no '$projectDirectory' was specified, using the current directory.");
+    Logger.i("As no '$projectDirectory' was specified, using the current directory: ${Utils.projectDirectory}");
   }
 
-  Utils.isVerbose = result.wasParsed(verbose);
+  Utils.isVerbose = !result.wasParsed(quiet);
   Utils.generateTestMocks = result.wasParsed(generateTestMocks);
   Utils.isRedisUsed = result.wasParsed(useRedis);
 }

@@ -106,7 +106,7 @@ abstract class Utils {
   }
 
   static void logHeader(String title) {
-    Logger.log('\n---------------------- $title ----------------------', fatal: true);
+    Logger.i(title);
   }
 
   static String getFileName(String path) {
