@@ -8,25 +8,39 @@ import 'package:redis/redis.dart';
 import '../utils/log.dart';
 import '../utils/utils.dart';
 
+/// An interface for a database service used to cache generated code.
 abstract class DatabaseService {
+  /// Initializes the database service.
   Future<void> init();
 
+  /// Checks if the mapping is available for the given digests in bulk.
   FutureOr<Map<String, bool>> isMappingAvailableForBulk(
     Iterable<String> digests,
   );
+
+  /// Checks if the mapping is available for the given digest.
   FutureOr<bool> isMappingAvailable(String digest);
 
+  /// Gets the cached file path for the given digests in bulk.
   FutureOr<Map<String, String>> getCachedFilePathForBulk(
     Iterable<String> digests,
   );
+
+  /// Gets the cached file path for the given digest.
   FutureOr<String> getCachedFilePath(String digest);
 
+  /// Creates entries for the given cached file paths in bulk.
   Future<void> createEntryForBulk(Map<String, String> cachedFilePaths);
+
+  /// Creates an entry for the given digest and cached file path.
   Future<void> createEntry(String digest, String cachedFilePath);
 
+  /// Flushes the database service. Flushing to disk, or closing network connections
+  /// could be done here.
   Future<void> flush();
 }
 
+/// An implementation of [DatabaseService] using Redis.
 class RedisDatabaseService implements DatabaseService {
   static const _tag = 'RedisDatabaseService';
 
@@ -189,6 +203,7 @@ save 60 1
   }
 }
 
+/// An implementation of [DatabaseService] using Hive.
 class HiveDatabaseService implements DatabaseService {
   final String dirPath;
 
