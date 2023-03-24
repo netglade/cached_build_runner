@@ -11,10 +11,14 @@ import '../utils/utils.dart';
 abstract class DatabaseService {
   Future<void> init();
 
-  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests);
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(
+    Iterable<String> digests,
+  );
   FutureOr<bool> isMappingAvailable(String digest);
 
-  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests);
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(
+    Iterable<String> digests,
+  );
   FutureOr<String> getCachedFilePath(String digest);
 
   Future<void> createEntryForBulk(Map<String, String> cachedFilePaths);
@@ -50,7 +54,9 @@ class RedisDatabaseService implements DatabaseService {
   FutureOr<String> getCachedFilePath(String digest) async {
     final data = _cache[digest];
     if (data == null) {
-      throw Exception('$_tag: getCachedFilePath: asked path for non existing digest');
+      throw Exception(
+        '$_tag: getCachedFilePath: asked path for non existing digest',
+      );
     }
 
     return data;
@@ -68,7 +74,9 @@ dir ${Utils.appCacheDirectory}
 save 60 1
 """;
 
-    final configurationFile = File(path.join(Utils.appCacheDirectory, 'redis.conf'));
+    final configurationFile = File(
+      path.join(Utils.appCacheDirectory, 'redis.conf'),
+    );
     configurationFile.writeAsStringSync(configuration);
     return configurationFile;
   }
@@ -124,16 +132,22 @@ save 60 1
   }
 
   @override
-  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests) {
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(
+    Iterable<String> digests,
+  ) {
     for (final digest in digests) {
       if (!_cache.containsKey(digest)) {
-        throw Exception('$_tag: getCachedFilePathForBulk: asked path for non existing digest: $digest');
+        throw Exception(
+          '$_tag: getCachedFilePathForBulk: asked path for non existing digest: $digest',
+        );
       }
     }
     return _cache;
   }
 
-  Future<Map<String, String?>> _waitMapFutures(Map<String, Future<dynamic>> map) async {
+  Future<Map<String, String?>> _waitMapFutures(
+    Map<String, Future<dynamic>> map,
+  ) async {
     final result = <String, String?>{};
     final keys = map.keys.toList();
     final values = await Future.wait(map.values);
@@ -144,7 +158,9 @@ save 60 1
   }
 
   @override
-  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests) async {
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(
+    Iterable<String> digests,
+  ) async {
     final transaction = await _command.multi();
 
     final futures = <String, Future<dynamic>>{};
@@ -164,7 +180,9 @@ save 60 1
         if (entry.value != null) _cache[entry.key] = entry.value!;
       }
     } else {
-      throw Exception('$_tag: isMappingAvailableForBulk: Redis Error $response');
+      throw Exception(
+        '$_tag: isMappingAvailableForBulk: Redis Error $response',
+      );
     }
 
     return data.map((key, value) => MapEntry(key, value != null));
@@ -196,7 +214,9 @@ class HiveDatabaseService implements DatabaseService {
   FutureOr<String> getCachedFilePath(String digest) {
     final filePath = _box.get(digest);
     if (filePath == null) {
-      throw Exception('$_tag: getCachedFilePath: asked path for non existing digest');
+      throw Exception(
+        '$_tag: getCachedFilePath: asked path for non existing digest',
+      );
     }
 
     return filePath;
@@ -218,7 +238,9 @@ class HiveDatabaseService implements DatabaseService {
   }
 
   @override
-  FutureOr<Map<String, String>> getCachedFilePathForBulk(Iterable<String> digests) {
+  FutureOr<Map<String, String>> getCachedFilePathForBulk(
+    Iterable<String> digests,
+  ) {
     final Map<String, String> data = {};
 
     for (final digest in digests) {
@@ -229,7 +251,9 @@ class HiveDatabaseService implements DatabaseService {
   }
 
   @override
-  FutureOr<Map<String, bool>> isMappingAvailableForBulk(Iterable<String> digests) {
+  FutureOr<Map<String, bool>> isMappingAvailableForBulk(
+    Iterable<String> digests,
+  ) {
     final Map<String, bool> data = {};
 
     for (final digest in digests) {

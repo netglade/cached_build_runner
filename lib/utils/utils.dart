@@ -16,7 +16,10 @@ abstract class Utils {
     const pubspecFileName = 'pubspec.yaml';
     const searchString = 'name:';
 
-    final pubspecFile = File(path.join(Utils.projectDirectory, pubspecFileName));
+    final pubspecFile = File(path.join(
+      Utils.projectDirectory,
+      pubspecFileName,
+    ));
     for (final line in pubspecFile.readAsLinesSync()) {
       if (line.contains(searchString)) {
         appPackageName = line.split(searchString).last.trim();
@@ -52,7 +55,8 @@ abstract class Utils {
 
   static String calculateTestFileDigestFor(List<String> dependencies) {
     if (dependencies.isEmpty) {
-      throw Exception('Dependencies list cannot be empty when invoked to generate digest');
+      throw Exception(
+          'Dependencies list cannot be empty when invoked to generate digest');
     }
 
     final sb = StringBuffer();

@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:cached_build_runner/cached_build_runner.dart' as cached_build_runner;
+import 'package:cached_build_runner/cached_build_runner.dart'
+    as cached_build_runner;
 import 'package:cached_build_runner/database/database_service.dart';
 import 'package:cached_build_runner/utils/log.dart';
 import 'package:cached_build_runner/utils/utils.dart';
@@ -25,7 +26,9 @@ Future<void> main(List<String> arguments) async {
   Utils.initAppPackageName();
 
   /// initialize the database
-  final databaseService = Utils.isRedisUsed ? RedisDatabaseService() : HiveDatabaseService(Utils.appCacheDirectory);
+  final databaseService = Utils.isRedisUsed
+      ? RedisDatabaseService()
+      : HiveDatabaseService(Utils.appCacheDirectory);
   await databaseService.init();
 
   /// let's initiate the build
@@ -35,12 +38,19 @@ Future<void> main(List<String> arguments) async {
 
 void _parseArgs(List<String> args) {
   final parser = ArgParser()
-    ..addFlag(help, abbr: 'h', help: 'Print out usage instructions.', negatable: false)
-    ..addFlag(quiet, abbr: 'q', help: 'Disables printing out logs during build.', negatable: false)
+    ..addFlag(help,
+        abbr: 'h', help: 'Print out usage instructions.', negatable: false)
+    ..addFlag(
+      quiet,
+      abbr: 'q',
+      help: 'Disables printing out logs during build.',
+      negatable: false,
+    )
     ..addFlag(
       generateTestMocks,
       abbr: 't',
-      help: 'Generates mocks for test files, if this flag is not provided mock generations are skipped.',
+      help:
+          'Generates mocks for test files, if this flag is not provided mock generations are skipped.',
       negatable: false,
     )
     ..addFlag(
@@ -56,7 +66,11 @@ void _parseArgs(List<String> args) {
       abbr: 'c',
       help: 'Provide the directory where this tool can keep the caches.',
     )
-    ..addOption(projectDirectory, abbr: 'p', help: 'Provide the directory of the project.');
+    ..addOption(
+      projectDirectory,
+      abbr: 'p',
+      help: 'Provide the directory of the project.',
+    );
 
   final result = parser.parse(args);
 
@@ -73,14 +87,18 @@ ${parser.usage}
     Utils.appCacheDirectory = result[cacheDirectory];
   } else {
     Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
-    Logger.i("As no '$cacheDirectory' was specified, using the default directory: ${Utils.appCacheDirectory}");
+    Logger.i(
+      "As no '$cacheDirectory' was specified, using the default directory: ${Utils.appCacheDirectory}",
+    );
   }
 
   if (result.wasParsed(projectDirectory)) {
     Utils.projectDirectory = result[projectDirectory];
   } else {
     Utils.projectDirectory = Utils.getDefaultProjectDirectory();
-    Logger.i("As no '$projectDirectory' was specified, using the current directory: ${Utils.projectDirectory}");
+    Logger.i(
+      "As no '$projectDirectory' was specified, using the current directory: ${Utils.projectDirectory}",
+    );
   }
 
   Utils.isVerbose = !result.wasParsed(quiet);
