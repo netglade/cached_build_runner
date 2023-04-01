@@ -70,9 +70,12 @@ class CachedBuildRunner {
 
   void _generateContentHash(Directory directory) {
     if (!directory.existsSync()) return;
-    for (final file in directory.listSync(recursive: true)) {
-      if (file is File && file.isDartSourceCodeFile()) {
-        _contentDigestMap[file.path] = Utils.calculateDigestFor(file.path);
+    for (final entity in directory.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is File && entity.isDartSourceCodeFile()) {
+        _contentDigestMap[entity.path] = Utils.calculateDigestFor(entity.path);
       }
     }
   }
@@ -236,9 +239,7 @@ class CachedBuildRunner {
   /// final buildFilter = _getBuildFilterList(files);
   /// print(buildFilter); // 'lib/foo.g.dart'
   String _getBuildFilterList(List<CodeFile> files) {
-    final paths = files
-        .map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile))
-        .toList();
+    final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
     return paths.join(',');
   }
 
@@ -352,26 +353,24 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> _fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
-    /// TODO: let's update this to use dart's native regex
     final libRegExp = RegExp(r"part '.+\.g\.dart';");
+    final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
-    final libProcess = Process.runSync(
-      'grep',
-      [
-        '-r',
-        '-l',
-        '-E',
-        libRegExp.pattern,
-        '--include=*.dart',
-        '--exclude=*.g.dart',
-        path.join(Utils.projectDirectory, 'lib'),
-      ],
-      runInShell: true,
-    );
+    final List<String> libPathList = [];
 
-    final libPathList = libProcess.stdout.toString().split('\n').where(
-          (line) => line.isNotEmpty,
-        );
+    for (final entity in libDirectory.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is File && entity.isDartSourceCodeFile()) {
+        final filePath = entity.path.trim();
+        final fileContent = entity.readAsStringSync();
+
+        if (libRegExp.hasMatch(fileContent)) {
+          libPathList.add(filePath);
+        }
+      }
+    }
 
     Logger.v(
       'Found ${libPathList.length} files in "lib/" that needs code generation',
@@ -380,7 +379,7 @@ class CachedBuildRunner {
     return libPathList
         .map<CodeFile>(
           (path) => CodeFile(
-            path: path.trim(),
+            path: path,
             digest: Utils.calculateDigestFor(path),
           ),
         )
@@ -398,9 +397,9 @@ class CachedBuildRunner {
     final cacheEntry = <String, String>{};
 
     for (final file in files) {
-      Logger.v('Caching generated code for: ${Utils.getFileName(file.path)}');
-      final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       final generatedCodeFile = File(_getGeneratedFilePathFrom(file));
+      Logger.v('Caching generated code for: ${Utils.getFileName(generatedCodeFile.path)}');
+      final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       if (generatedCodeFile.existsSync()) {
         generatedCodeFile.copySync(cachedFilePath);
       } else {

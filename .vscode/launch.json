@@ -14,7 +14,7 @@
                 "-p",
 			    "/Users/mr.paul/Workspace/flutter/cached_build_runner/example",
             ],
-            "preLaunchTask": "killRedisServer"
+            // "preLaunchTask": "killRedisServer"
         }
     ],
 }
