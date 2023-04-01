@@ -10,7 +10,6 @@ abstract class Utils {
   static String appCacheDirectory = '';
   static String projectDirectory = '';
   static bool isVerbose = true;
-  static bool generateTestMocks = false;
   static bool isRedisUsed = false;
 
   /// Initializes the app package name by reading it from pubspec.yaml.
@@ -34,16 +33,9 @@ abstract class Utils {
     return md5.convert(utf8.encode(value)).toString();
   }
 
-  static final Map<String, String> _hashMap = {};
-
   /// Calculates the MD5 digest of a given file [filePath].
   static String calculateDigestFor(String filePath) {
-    if (_hashMap.containsKey(filePath)) {
-      _hashMap[filePath]!;
-    }
-
-    final hash = md5.convert(File(filePath).readAsBytesSync()).toString();
-    return _hashMap[filePath] = hash;
+    return md5.convert(File(filePath).readAsBytesSync()).toString();
   }
 
   /// Retrieves the file path from the import line [importLine] of a package.
@@ -62,7 +54,8 @@ abstract class Utils {
   static String calculateTestFileDigestFor(List<String> dependencies) {
     if (dependencies.isEmpty) {
       throw Exception(
-          'Dependencies list cannot be empty when invoked to generate digest');
+        'Dependencies list cannot be empty when invoked to generate digest',
+      );
     }
 
     final sb = StringBuffer();

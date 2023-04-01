@@ -10,12 +10,9 @@
             "type": "dart",
             "program": "bin/cached_build_runner.dart",
             "args": [
-                "-c",
-                "/Users/jyotirmoypaul/.cached_build_runner_dev",
+                "build",
                 "-p",
-			    "/Users/jyotirmoypaul/Documents/workspace/uni-app",
-                "-t",
-                "-r",
+			    "/Users/mr.paul/Workspace/flutter/cached_build_runner/example",
             ],
             "preLaunchTask": "killRedisServer"
         }

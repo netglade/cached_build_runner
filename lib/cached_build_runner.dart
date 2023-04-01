@@ -14,9 +14,12 @@
 
 library cached_build_runner;
 
+import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/extension.dart';
 import 'package:path/path.dart' as path;
+import 'package:synchronized/synchronized.dart' as sync;
 
 import 'database/database_service.dart';
 import 'model/code_file.dart';
@@ -27,6 +30,91 @@ class CachedBuildRunner {
   final DatabaseService _databaseService;
 
   CachedBuildRunner(this._databaseService);
+
+  final Map<String, String> _contentDigestMap = {};
+  final _buildLock = sync.Lock();
+
+  bool _isCodeGenerationNeeded(FileSystemEvent e) {
+    switch (e.type) {
+      case FileSystemEvent.modify:
+        final newDigest = Utils.calculateDigestFor(e.path);
+        if (newDigest != _contentDigestMap[e.path]) {
+          _contentDigestMap[e.path] = newDigest;
+          return true;
+        }
+        return false;
+
+      case FileSystemEvent.move:
+      case FileSystemEvent.create:
+        final digest = Utils.calculateDigestFor(e.path);
+        _contentDigestMap[e.path] = digest;
+        return true;
+
+      case FileSystemEvent.delete:
+        _contentDigestMap.remove(e.path);
+        return true;
+    }
+
+    return false;
+  }
+
+  void _synchronizedBuild() {
+    _buildLock.synchronized(build);
+  }
+
+  void _onFileSystemEvent(FileSystemEvent event) {
+    if (_isCodeGenerationNeeded(event)) {
+      _synchronizedBuild();
+    }
+  }
+
+  void _generateContentHash(Directory directory) {
+    if (!directory.existsSync()) return;
+    for (final file in directory.listSync(recursive: true)) {
+      if (file is File && file.isDartSourceCodeFile()) {
+        _contentDigestMap[file.path] = Utils.calculateDigestFor(file.path);
+      }
+    }
+  }
+
+  void _watchForDependencyChanges() {
+    final pubspecFile = File(path.join(Utils.projectDirectory, 'pubspec.yaml'));
+    final pubspecFileDigest = Utils.calculateDigestFor(pubspecFile.path);
+
+    pubspecFile.watch().listen((event) {
+      final newPubspecFileDigest = Utils.calculateDigestFor(event.path);
+      if (newPubspecFileDigest != pubspecFileDigest) {
+        Logger.i(
+          'As pubspec.yaml file has been modified, terminating cached_build_runner.\nNo further builds will be scheduled. Please restart the build.',
+        );
+        exit(0);
+      }
+    });
+  }
+
+  Future<void> watch() async {
+    _watchForDependencyChanges();
+
+    final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
+    final testDirectory = Directory(path.join(Utils.projectDirectory, 'test'));
+
+    Utils.logHeader(
+      'Preparing to watch files in directory: ${Utils.projectDirectory}',
+    );
+
+    _generateContentHash(libDirectory);
+    _generateContentHash(testDirectory);
+
+    /// perform a first build operation
+    await build();
+
+    Utils.logHeader('Watching for file changes.');
+
+    /// let's listen for file changes in the project directory
+    /// specifically in "lib" & "test" directory
+    libDirectory.watchDartSourceCodeFiles().listen(_onFileSystemEvent);
+    testDirectory.watchDartSourceCodeFiles().listen(_onFileSystemEvent);
+  }
 
   /// Runs an efficient version of `build_runner build` by determining which
   /// files need code generation and then either retrieving cached files,
@@ -81,7 +169,8 @@ class CachedBuildRunner {
     Logger.v('No. of non-cached files: ${badFiles.length}');
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
-    _generateCodesFor(badFiles);
+    final success = _generateCodesFor(badFiles);
+    if (!success) return;
 
     /// let's handle the good files - by copying the cached generated files to appropriate path
     await _copyGeneratedCodesFor(goodFiles);
@@ -107,7 +196,7 @@ class CachedBuildRunner {
         file.digest,
       );
       Logger.v(
-        'Copying cache to: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}',
+        'Copying file: ${Utils.getFileName(_getGeneratedFilePathFrom(file))}',
       );
       File(cachedGeneratedCodePath).copySync(_getGeneratedFilePathFrom(file));
 
@@ -155,18 +244,20 @@ class CachedBuildRunner {
 
   /// this method runs build_runner build method with --build-filter
   /// to only generate the required codes, thus avoiding unnecessary builds
-  void _generateCodesFor(List<CodeFile> files) {
-    if (files.isEmpty) return;
+  bool _generateCodesFor(List<CodeFile> files) {
+    if (files.isEmpty) return true;
     Utils.logHeader(
       'Generating Codes for non-cached files, found ${files.length} files',
     );
-
-    if (files.isEmpty) return;
 
     /// following command needs to be executed
     /// flutter pub run build_runner build --build-filter="..." -d
     /// where ... contains the list of files that needs generation
     Logger.v('Running build_runner build...', showPrefix: false);
+
+    /// TODO: let's check how we can use the build_runner package and include in this project
+    /// instead of relying on the flutter pub run command
+    /// there can be issues with flutter being in the path.
     final process = Process.runSync(
       'flutter',
       [
@@ -182,12 +273,13 @@ class CachedBuildRunner {
     );
 
     if (process.stderr.toString().isNotEmpty) {
-      throw Exception(
-        '_generateCodesFor :: failed to run build_runner build :: ${process.stderr}',
-      );
+      if (process.stdout.toString().isNotEmpty) Logger.e(process.stdout.trim());
+      Logger.e(process.stderr.trim());
+      return false;
+    } else {
+      Logger.v(process.stdout.trim(), showPrefix: false);
+      return true;
     }
-
-    Logger.v(process.stdout.trim(), showPrefix: false);
   }
 
   /// Fetches all the Dart test files in the 'test/' directory that contain the @Generate annotation for code generation.
@@ -200,16 +292,15 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] objects representing all the test files in the 'test/' directory
   /// that need code generation.
   Future<List<CodeFile>> _fetchFilePathsFromTest() async {
-    if (!Utils.generateTestMocks) return const [];
-
     final List<CodeFile> codeFiles = [];
     final searchString = 'package:${Utils.appPackageName}/';
 
     final List<List<String>> testFiles = [];
 
-    for (FileSystemEntity entity in Directory(
-      path.join(Utils.projectDirectory, 'test'),
-    ).listSync(
+    final testDirectory = Directory(path.join(Utils.projectDirectory, 'test'));
+    if (!testDirectory.existsSync()) return const [];
+
+    for (FileSystemEntity entity in testDirectory.listSync(
       recursive: true,
       followLinks: false,
     )) {
@@ -261,6 +352,7 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> _fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
+    /// TODO: let's update this to use dart's native regex
     final libRegExp = RegExp(r"part '.+\.g\.dart';");
 
     final libProcess = Process.runSync(
@@ -303,12 +395,17 @@ class CachedBuildRunner {
       'Caching new generated codes, caching ${files.length} files',
     );
 
+    final cacheEntry = <String, String>{};
+
     for (final file in files) {
       Logger.v('Caching generated code for: ${Utils.getFileName(file.path)}');
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
-      File(_getGeneratedFilePathFrom(file)).copySync(cachedFilePath);
-
-      final cacheEntry = <String, String>{};
+      final generatedCodeFile = File(_getGeneratedFilePathFrom(file));
+      if (generatedCodeFile.existsSync()) {
+        generatedCodeFile.copySync(cachedFilePath);
+      } else {
+        continue;
+      }
 
       /// if file has been successfully copied, let's make an entry to the db
       if (File(cachedFilePath).existsSync()) {
@@ -318,9 +415,9 @@ class CachedBuildRunner {
           'ERROR: _cacheGeneratedCodesFor: failed to copy generated file $file',
         );
       }
-
-      /// create a bulk entry
-      await _databaseService.createEntryForBulk(cacheEntry);
     }
+
+    /// create a bulk entry
+    await _databaseService.createEntryForBulk(cacheEntry);
   }
 }
