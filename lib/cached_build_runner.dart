@@ -239,7 +239,9 @@ class CachedBuildRunner {
   /// final buildFilter = _getBuildFilterList(files);
   /// print(buildFilter); // 'lib/foo.g.dart'
   String _getBuildFilterList(List<CodeFile> files) {
-    final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
+    final paths = files
+        .map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile))
+        .toList();
     return paths.join(',');
   }
 
@@ -398,7 +400,9 @@ class CachedBuildRunner {
 
     for (final file in files) {
       final generatedCodeFile = File(_getGeneratedFilePathFrom(file));
-      Logger.v('Caching generated code for: ${Utils.getFileName(generatedCodeFile.path)}');
+      Logger.v(
+        'Caching generated code for: ${Utils.getFileName(generatedCodeFile.path)}',
+      );
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       if (generatedCodeFile.existsSync()) {
         generatedCodeFile.copySync(cachedFilePath);
