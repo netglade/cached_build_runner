@@ -5,14 +5,22 @@ Cached Build Runner is a Dart package that optimizes the build_runner by caching
 ## Usage
 
 ```bash
-cached_build_runner [options]
+cached_build_runner <command> [arguments]
 ```
 
 ### Usage
+Global options:
+-h, --help    Print this usage information.
+
+Available commands:
+* **build**:  Performs a single build on the specified targets and then exits.
+* **watch**:   Builds the specified targets, watching the file system for updates and rebuilding as appropriate.
+
+Available arguments:
 * -h, --help: Print out usage instructions.
 * -q, --quiet: Disables printing out logs during the build.
-* -t, --generate-test-mock: Generates mocks for test files. If this flag is not provided, mock generations are skipped.
 * -r, --redis: Use Redis database if installed on the system. Using Redis allows multiple instance access and is ideal for usage in pipelines. The default implementation uses a file system storage (Hive), which is ideal for usage in local systems.
+
 * -c, --cache-directory: Provide the directory where this tool can keep the caches.
 * -p, --project-directory: Provide the directory of the project.
 
