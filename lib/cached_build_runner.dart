@@ -309,7 +309,7 @@ class CachedBuildRunner {
     )) {
       final List<String> dependencies = [];
 
-      if (entity is File) {
+      if (entity is File && entity.isDartSourceCodeFile()) {
         final filePath = entity.path.trim();
         final fileContent = entity.readAsStringSync();
 
