@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Minor bug fix, refactors build to check for .dart file before working on code generations in test directory. This will make sure any unnecessary files are ignored.
+
 ## 0.0.5
 
 - Add support for watching code changes in project directory, and generate code files when needed.
