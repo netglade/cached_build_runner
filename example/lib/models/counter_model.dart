@@ -1,15 +1,16 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'base_class.dart';
 
 part 'counter_model.g.dart';
 
 @JsonSerializable()
-class CounterModel {
+class CounterModel extends BaseClass {
   int count;
-  String? description;
+  final String description;
 
   CounterModel({
     this.count = 0,
-    this.description,
+    this.description = 'description',
   });
 
   factory CounterModel.fromJson(Map<String, dynamic> json) =>
