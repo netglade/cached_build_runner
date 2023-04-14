@@ -17,6 +17,8 @@ library cached_build_runner;
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_build_runner/core/dependency_visitor.dart';
+import 'package:cached_build_runner/utils/digest_utils.dart';
 import 'package:cached_build_runner/utils/extension.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart' as sync;
@@ -34,10 +36,12 @@ class CachedBuildRunner {
   final Map<String, String> _contentDigestMap = {};
   final _buildLock = sync.Lock();
 
+  final _dependencyVisitor = DependencyVisitor();
+
   bool _isCodeGenerationNeeded(FileSystemEvent e) {
     switch (e.type) {
       case FileSystemEvent.modify:
-        final newDigest = Utils.calculateDigestFor(e.path);
+        final newDigest = DigestUtils.generateDigestForSingleFile(e.path);
         if (newDigest != _contentDigestMap[e.path]) {
           _contentDigestMap[e.path] = newDigest;
           return true;
@@ -46,7 +50,7 @@ class CachedBuildRunner {
 
       case FileSystemEvent.move:
       case FileSystemEvent.create:
-        final digest = Utils.calculateDigestFor(e.path);
+        final digest = DigestUtils.generateDigestForSingleFile(e.path);
         _contentDigestMap[e.path] = digest;
         return true;
 
@@ -75,17 +79,25 @@ class CachedBuildRunner {
       followLinks: false,
     )) {
       if (entity is File && entity.isDartSourceCodeFile()) {
-        _contentDigestMap[entity.path] = Utils.calculateDigestFor(entity.path);
+        _contentDigestMap[entity.path] =
+            DigestUtils.generateDigestForSingleFile(
+          entity.path,
+        );
       }
     }
   }
 
   void _watchForDependencyChanges() {
     final pubspecFile = File(path.join(Utils.projectDirectory, 'pubspec.yaml'));
-    final pubspecFileDigest = Utils.calculateDigestFor(pubspecFile.path);
+    final pubspecFileDigest = DigestUtils.generateDigestForSingleFile(
+      pubspecFile.path,
+    );
 
     pubspecFile.watch().listen((event) {
-      final newPubspecFileDigest = Utils.calculateDigestFor(event.path);
+      final newPubspecFileDigest = DigestUtils.generateDigestForSingleFile(
+        event.path,
+      );
+
       if (newPubspecFileDigest != pubspecFileDigest) {
         Logger.i(
           'As pubspec.yaml file has been modified, terminating cached_build_runner.\nNo further builds will be scheduled. Please restart the build.',
@@ -333,7 +345,10 @@ class CachedBuildRunner {
       codeFiles.add(
         CodeFile(
           path: files[0],
-          digest: Utils.calculateTestFileDigestFor(files),
+          digest: DigestUtils.generateDigestForMultipleClassFile(
+            _dependencyVisitor,
+            files,
+          ),
           isTestFile: true,
         ),
       );
@@ -382,7 +397,10 @@ class CachedBuildRunner {
         .map<CodeFile>(
           (path) => CodeFile(
             path: path,
-            digest: Utils.calculateDigestFor(path),
+            digest: DigestUtils.generateDigestForClassFile(
+              _dependencyVisitor,
+              path,
+            ),
           ),
         )
         .toList();

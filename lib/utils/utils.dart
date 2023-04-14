@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
+
 import 'package:path/path.dart' as path;
-import 'package:crypto/crypto.dart';
+
 import 'log.dart';
 
 /// A utility class that provides helper methods for various operations.
@@ -28,16 +28,6 @@ abstract class Utils {
     }
   }
 
-  /// Calculates the MD5 digest of a given string [value].
-  static String calculateDigestForString(String value) {
-    return md5.convert(utf8.encode(value)).toString();
-  }
-
-  /// Calculates the MD5 digest of a given file [filePath].
-  static String calculateDigestFor(String filePath) {
-    return md5.convert(File(filePath).readAsBytesSync()).toString();
-  }
-
   /// Retrieves the file path from the import line [importLine] of a package.
   static String getFilePathFromImportLine(String importLine) {
     final searchString = 'package:$appPackageName/';
@@ -48,24 +38,6 @@ abstract class Utils {
 
     final dependency = importLine.substring(fromIndex, toIndex);
     return path.join(Utils.projectDirectory, 'lib', dependency).trim();
-  }
-
-  /// Calculates the test file digest for the provided [dependencies] list.
-  static String calculateTestFileDigestFor(List<String> dependencies) {
-    if (dependencies.isEmpty) {
-      throw Exception(
-        'Dependencies list cannot be empty when invoked to generate digest',
-      );
-    }
-
-    final sb = StringBuffer();
-
-    for (final file in dependencies) {
-      sb.write(calculateDigestFor(file));
-      sb.write('-');
-    }
-
-    return calculateDigestForString(sb.toString());
   }
 
   /// Logs a header [title] to the console.

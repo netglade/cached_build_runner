@@ -1,0 +1,3 @@
+class CoreClass {
+  String? core;
+}

@@ -15,7 +15,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   json_serializable: ^6.6.1
   json_annotation: ^4.8.0
-  sync: ^0.3.0
   
 
 dev_dependencies:

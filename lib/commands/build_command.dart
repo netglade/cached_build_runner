@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
-import 'package:cached_build_runner/commands/initializer.dart';
+
 import '../args/args_parser.dart';
 import '../args/args_utils.dart';
+import 'initializer.dart';
 
 class BuildCommand extends Command {
   late final ArgumentParser _argumentParser;
