@@ -22,7 +22,6 @@ Available arguments:
 * -r, --redis: Use Redis database if installed on the system. Using Redis allows multiple instance access and is ideal for usage in pipelines. The default implementation uses a file system storage (Hive), which is ideal for usage in local systems.
 
 * -c, --cache-directory: Provide the directory where this tool can keep the caches.
-* -p, --project-directory: Provide the directory of the project.
 
 # Cached Build Runner
 Add the package to your pubspec.yaml file under dev_dependencies:

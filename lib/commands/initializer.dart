@@ -8,6 +8,12 @@ import '../utils/utils.dart';
 /// And also initializes any variables, or create cache directory if non-existing.
 class Initializer {
   Future<CachedBuildRunner> init() async {
+    /// the project directory is always where the `flutter run` command is executed
+    /// which is the current directory
+    Utils.projectDirectory =
+        Platform.environment['CACHED_BUILD_RUNNER_PROJECT_DIRECTORY'] ??
+            Directory.current.path;
+
     /// let's make the appCacheDirectory if not existing already
     Directory(Utils.appCacheDirectory).createSync(recursive: true);
 

@@ -31,11 +31,6 @@ class ArgumentParser {
         ArgsUtils.cacheDirectory,
         abbr: 'c',
         help: 'Provide the directory where this tool can keep the caches.',
-      )
-      ..addOption(
-        ArgsUtils.projectDirectory,
-        abbr: 'p',
-        help: 'Provide the directory of the project.',
       );
   }
 
@@ -52,16 +47,6 @@ class ArgumentParser {
       Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
       Logger.i(
         "As no '${ArgsUtils.cacheDirectory}' was specified, using the default directory: ${Utils.appCacheDirectory}",
-      );
-    }
-
-    /// project directory
-    if (result.wasParsed(ArgsUtils.projectDirectory)) {
-      Utils.projectDirectory = result[ArgsUtils.projectDirectory];
-    } else {
-      Utils.projectDirectory = Utils.getDefaultProjectDirectory();
-      Logger.i(
-        "As no '${ArgsUtils.projectDirectory}' was specified, using the current directory: ${Utils.projectDirectory}",
       );
     }
 

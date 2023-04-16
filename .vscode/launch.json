@@ -11,9 +11,10 @@
             "program": "bin/cached_build_runner.dart",
             "args": [
                 "build",
-                "-p",
-			    "/Users/mr.paul/Workspace/flutter/cached_build_runner/example",
             ],
+            "env": {
+                "CACHED_BUILD_RUNNER_PROJECT_DIRECTORY": "/Users/mr.paul/Workspace/flutter/cached_build_runner/example",
+            },
             // "preLaunchTask": "killRedisServer"
         }
     ],
