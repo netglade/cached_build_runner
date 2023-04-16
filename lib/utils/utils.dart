@@ -21,6 +21,13 @@ abstract class Utils {
       Utils.projectDirectory,
       pubspecFileName,
     ));
+
+    if (!pubspecFile.existsSync()) {
+      reportError(
+        'Could not find $pubspecFileName in project directory: ${Utils.projectDirectory}',
+      );
+    }
+
     for (final line in pubspecFile.readAsLinesSync()) {
       if (line.contains(searchString)) {
         appPackageName = line.split(searchString).last.trim();
@@ -55,7 +62,7 @@ abstract class Utils {
     }
 
     if (homeDir.isEmpty) {
-      throw Exception(
+      reportError(
         'Could not set default cache directory. Please use the --cache-directory flag to provide a cache directory.',
       );
     }
@@ -63,8 +70,8 @@ abstract class Utils {
     return path.join(path.normalize(homeDir), defaultCacheDirectoryName);
   }
 
-  /// Returns the default project directory, which is the current directory.
-  static String getDefaultProjectDirectory() {
-    return Directory.current.path;
+  static void reportError(String message) {
+    Logger.e(message);
+    exit(1);
   }
 }
