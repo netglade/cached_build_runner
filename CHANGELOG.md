@@ -1,3 +1,9 @@
+## 0.0.7
+
+- Fix a major bug where a class's dependencies were not considered while generating digest, so any change in the super classes caused wrong output.
+- Remove option to set projectDirectory, the current directory is always considered the projectDirectory.
+- Minor error handling improvements.
+
 ## 0.0.6
 
 - Minor bug fix, refactors build to check for .dart file before working on code generations in test directory. This will make sure any unnecessary files are ignored.
