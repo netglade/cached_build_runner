@@ -94,7 +94,10 @@ class DependencyVisitor {
     };
   }
 
-  List<String> _convertImportStatementsToAbsolutePaths(String contents) {
+  List<String> convertImportStatementsToAbsolutePaths(
+    String contents, {
+    String directory = 'lib',
+  }) {
     final importLines = _getImportLines(contents);
     final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
     final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
@@ -103,7 +106,9 @@ class DependencyVisitor {
 
     /// absolute import lines
     for (final import in absoluteImportLines) {
-      paths.add(path.join(Utils.projectDirectory, 'lib', import.substring(1)));
+      paths.add(
+        path.join(Utils.projectDirectory, directory, import.substring(1)),
+      );
     }
 
     /// relative import lines
@@ -115,7 +120,7 @@ class DependencyVisitor {
   }
 
   Set<String> _resolveUri(String contents, Set<String> dependencies) {
-    final importPaths = _convertImportStatementsToAbsolutePaths(contents);
+    final importPaths = convertImportStatementsToAbsolutePaths(contents);
     final paths = <String>{};
 
     for (final dependencyPath in importPaths) {

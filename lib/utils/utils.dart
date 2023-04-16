@@ -28,18 +28,6 @@ abstract class Utils {
     }
   }
 
-  /// Retrieves the file path from the import line [importLine] of a package.
-  static String getFilePathFromImportLine(String importLine) {
-    final searchString = 'package:$appPackageName/';
-
-    final fromIndex = importLine.indexOf(searchString) + searchString.length;
-    int toIndex = importLine.lastIndexOf("'");
-    if (toIndex == -1) toIndex = importLine.lastIndexOf('"');
-
-    final dependency = importLine.substring(fromIndex, toIndex);
-    return path.join(Utils.projectDirectory, 'lib', dependency).trim();
-  }
-
   /// Logs a header [title] to the console.
   static void logHeader(String title) {
     Logger.i(title);

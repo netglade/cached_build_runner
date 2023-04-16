@@ -307,9 +307,6 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] objects representing all the test files in the 'test/' directory
   /// that need code generation.
   Future<List<CodeFile>> _fetchFilePathsFromTest() async {
-    final List<CodeFile> codeFiles = [];
-    final searchString = 'package:${Utils.appPackageName}/';
-
     final List<List<String>> testFiles = [];
 
     final testDirectory = Directory(path.join(Utils.projectDirectory, 'test'));
@@ -330,16 +327,17 @@ class CachedBuildRunner {
         if (!fileContent.contains('@Generate')) continue;
 
         dependencies.add(filePath);
-        for (final fileLine in entity.readAsLinesSync()) {
-          if (fileLine.contains(searchString)) {
-            dependencies.add(Utils.getFilePathFromImportLine(fileLine));
-          }
-        }
 
-        /// add to the dependencies list, only if there are test files that has dependencies
-        if (dependencies.length > 1) testFiles.add(dependencies);
+        final importDependency =
+            _dependencyVisitor.convertImportStatementsToAbsolutePaths(
+          fileContent,
+        );
+
+        dependencies.addAll(importDependency);
       }
     }
+
+    final List<CodeFile> codeFiles = [];
 
     for (final files in testFiles) {
       codeFiles.add(
