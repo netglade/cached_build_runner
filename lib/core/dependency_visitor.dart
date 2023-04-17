@@ -17,7 +17,7 @@ class DependencyVisitor {
   final withRegex = RegExp(r"with\s+([\w\s,]+)");
 
   /// Regex for parsing import statements
-  final importRegex = RegExp(r'''import\s+(?!'package:)(?:'|")(.*?)('|");?''');
+  final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
   final packageImportRegex = RegExp(
     'import\\s+\'package:${Utils.appPackageName}(.*)\';',
   );
@@ -76,13 +76,15 @@ class DependencyVisitor {
     final lines = dartSource.split('\n');
 
     for (final line in lines) {
-      final relativeMatch = importRegex.firstMatch(line);
+      final relativeMatch = relativeImportRegex.firstMatch(line);
       final packageMatch = packageImportRegex.firstMatch(line);
 
       if (relativeMatch != null) {
         final importedPath = relativeMatch.group(1);
         if (importedPath != null) relativeImports.add(importedPath);
-      } else if (packageMatch != null) {
+      }
+
+      if (packageMatch != null) {
         final importedPath = packageMatch.group(1);
         if (importedPath != null) absoluteImports.add(importedPath);
       }

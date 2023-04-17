@@ -334,6 +334,7 @@ class CachedBuildRunner {
         );
 
         dependencies.addAll(importDependency);
+        testFiles.add(dependencies);
       }
     }
 
