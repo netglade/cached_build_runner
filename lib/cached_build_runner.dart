@@ -369,7 +369,7 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> _fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
-    final libRegExp = RegExp(r"part '.+\.g\.dart';");
+    final libRegExp = RegExp(r"part '.+\.(freezed|g|chopper)\.dart';");
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
     final List<String> libPathList = [];
