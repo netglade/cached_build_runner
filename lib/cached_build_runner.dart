@@ -230,9 +230,7 @@ class CachedBuildRunner {
   String _getGeneratedFilePathFrom(CodeFile file) {
     final path = file.path;
     final lastDotDart = path.lastIndexOf('.dart');
-    final extension = file.isTestFile ? '.mocks.dart' : '.g.dart';
-    
-    Logger.v("getGeneratedFilePathFrom:: path:$path lastDotDart: $lastDotDart extension: $extension");    
+    final extension = file.isTestFile ? '.mocks.dart' : file.generatedSuffix;
 
     if (lastDotDart >= 0) {
       return '${path.substring(0, lastDotDart)}$extension';
@@ -375,6 +373,7 @@ class CachedBuildRunner {
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
     final List<String> libPathList = [];
+    final Map<String, String> libPathToPartMap = {};
 
     for (final entity in libDirectory.listSync(
       recursive: true,
@@ -386,6 +385,8 @@ class CachedBuildRunner {
 
         if (libRegExp.hasMatch(fileContent)) {
           libPathList.add(filePath);
+          final part = libRegExp.firstMatch(fileContent)!.group(1)!;
+          libPathToPartMap[filePath] = '.$part.dart';
         }
       }
     }
@@ -402,6 +403,7 @@ class CachedBuildRunner {
               _dependencyVisitor,
               path,
             ),
+            generatedSuffix: libPathToPartMap[path]!,
           ),
         )
         .toList();
