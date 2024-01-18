@@ -231,6 +231,8 @@ class CachedBuildRunner {
     final path = file.path;
     final lastDotDart = path.lastIndexOf('.dart');
     final extension = file.isTestFile ? '.mocks.dart' : '.g.dart';
+    
+    Logger.v("getGeneratedFilePathFrom:: path:$path lastDotDart: $lastDotDart extension: $extension");    
 
     if (lastDotDart >= 0) {
       return '${path.substring(0, lastDotDart)}$extension';
