@@ -20,6 +20,7 @@ Available arguments:
 * -h, --help: Print out usage instructions.
 * -q, --quiet: Disables printing out logs during the build.
 * -r, --redis: Use Redis database if installed on the system. Using Redis allows multiple instance access and is ideal for usage in pipelines. The default implementation uses a file system storage (Hive), which is ideal for usage in local systems.
+* -p, --[no]prune: Enable pruning cache directory when pubspec.lock was changed since last build. Defaults true.
 
 * -c, --cache-directory: Provide the directory where this tool can keep the caches.
 

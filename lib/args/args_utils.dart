@@ -7,4 +7,5 @@ abstract class ArgsUtils {
   static const quiet = 'quiet';
   static const useRedis = 'redis';
   static const cacheDirectory = 'cache-directory';
+  static const prune = 'prune';
 }

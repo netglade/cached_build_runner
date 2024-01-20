@@ -1,3 +1,9 @@
+## 0.1.0
+- Upgrade to Dart 3
+- Add prunning option - prune when pubspec.lock was changed
+- Change how dependencies are determined - just by imported files
+- Support other generated files, not just .g.dart
+
 ## 0.0.7
 
 - Fix a major bug where a class's dependencies were not considered while generating digest, so any change in the super classes caused wrong output.

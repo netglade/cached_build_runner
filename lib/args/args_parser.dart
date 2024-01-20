@@ -26,6 +26,13 @@ class ArgumentParser {
             'Use redis database, if installed on the system. Using redis allows multiple instance access. Ideal for usage in pipelines. Default implementation uses a file system storage (hive), which is idea for usage in local systems.',
         negatable: false,
       )
+      ..addFlag(
+        ArgsUtils.prune,
+        abbr: 'p',
+        help: 'Enable pruning cache directory when pubspec.lock was changed since last build.',
+        negatable: true,
+        defaultsTo: true,
+      )
       ..addSeparator('')
       ..addOption(
         ArgsUtils.cacheDirectory,
@@ -55,5 +62,8 @@ class ArgumentParser {
 
     /// use redis
     Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
+
+    // enable prunning
+    Utils.isPruneEnabled = result[ArgsUtils.prune];
   }
 }

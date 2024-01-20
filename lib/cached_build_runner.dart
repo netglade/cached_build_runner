@@ -18,6 +18,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_build_runner/core/dependency_visitor.dart';
+import 'package:cached_build_runner/utils/constants.dart';
 import 'package:cached_build_runner/utils/digest_utils.dart';
 import 'package:cached_build_runner/utils/extension.dart';
 import 'package:path/path.dart' as path;
@@ -79,8 +80,7 @@ class CachedBuildRunner {
       followLinks: false,
     )) {
       if (entity is File && entity.isDartSourceCodeFile()) {
-        _contentDigestMap[entity.path] =
-            DigestUtils.generateDigestForSingleFile(
+        _contentDigestMap[entity.path] = DigestUtils.generateDigestForSingleFile(
           entity.path,
         );
       }
@@ -154,6 +154,8 @@ class CachedBuildRunner {
   Future<void> build() async {
     Utils.logHeader('Determining Files that needs code generation');
 
+    await _checkPrunning();
+
     final libFiles = _fetchFilePathsFromLib();
     final testFiles = await _fetchFilePathsFromTest();
     final files = List<CodeFile>.from(libFiles)..addAll(testFiles);
@@ -181,7 +183,7 @@ class CachedBuildRunner {
     }
 
     Logger.v('No. of cached files: ${goodFiles.length}');
-    Logger.v('No. of non-cached files: ${badFiles.length}');
+    Logger.v('No. of non-cached files: ${badFiles.length}\n${badFiles.join('\n')}');
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     final success = _generateCodesFor(badFiles);
@@ -197,6 +199,37 @@ class CachedBuildRunner {
     await _databaseService.flush();
 
     /// We are done, probably?
+  }
+
+  Future<void> _checkPrunning() async {
+    if (!Utils.isPruneEnabled) return;
+
+    Logger.v('Prunning is enabled - checking pubpsec.lock');
+
+    final pubspecLockPath = path.join(Utils.projectDirectory, Constants.pubpsecLock);
+    final pubspecLock = File(pubspecLockPath);
+
+    final fileExists = await pubspecLock.exists();
+
+    if (!fileExists) {
+      Logger.e('No ${Constants.pubpsecLock} exits');
+
+      return;
+    }
+
+    final digest = DigestUtils.generateDigestForSingleFile(pubspecLockPath);
+
+    final existingDigest = await _databaseService.getEntryByKey(Constants.pubpsecLock);
+
+    Logger.v(
+        'Pubspec.lock digest: $digest vs existing Pubspec.lock digest: $digest | Will prune? ${digest != existingDigest}');
+
+    if (existingDigest != null && digest != existingDigest) {
+      Logger.v('!!! Pruning cache as pubspec.lock was changed from last time !!!');
+      await _databaseService.prune(keysToKeep: [Constants.pubpsecLock]);
+    }
+
+    await _databaseService.createCustomEntry(Constants.pubpsecLock, digest);
   }
 
   /// Copies the cached generated files to the project directory for the given files list.
@@ -230,7 +263,7 @@ class CachedBuildRunner {
   String _getGeneratedFilePathFrom(CodeFile file) {
     final path = file.path;
     final lastDotDart = path.lastIndexOf('.dart');
-    final extension = file.isTestFile ? '.mocks.dart' : '.g.dart';
+    final extension = file.isTestFile ? '.mocks.dart' : '.${file.suffix ?? 'g'}.dart';
 
     if (lastDotDart >= 0) {
       return '${path.substring(0, lastDotDart)}$extension';
@@ -251,9 +284,7 @@ class CachedBuildRunner {
   /// final buildFilter = _getBuildFilterList(files);
   /// print(buildFilter); // 'lib/foo.g.dart'
   String _getBuildFilterList(List<CodeFile> files) {
-    final paths = files
-        .map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile))
-        .toList();
+    final paths = files.map<String>((codeFile) => _getGeneratedFilePathFrom(codeFile)).toList();
     return paths.join(',');
   }
 
@@ -270,6 +301,9 @@ class CachedBuildRunner {
     /// where ... contains the list of files that needs generation
     Logger.v('Running build_runner build...', showPrefix: false);
 
+    final filterList = _getBuildFilterList(files);
+    Logger.v(filterList, showPrefix: false);
+
     /// TODO: let's check how we can use the build_runner package and include in this project
     /// instead of relying on the flutter pub run command
     /// there can be issues with flutter being in the path.
@@ -282,7 +316,7 @@ class CachedBuildRunner {
         'build',
         '--build-filter',
         _getBuildFilterList(files),
-        '--delete-conflicting-outputs'
+        //  '--delete-conflicting-outputs',
       ],
       workingDirectory: Utils.projectDirectory,
     );
@@ -328,8 +362,7 @@ class CachedBuildRunner {
 
         dependencies.add(filePath);
 
-        final importDependency =
-            _dependencyVisitor.convertImportStatementsToAbsolutePaths(
+        final importDependency = _dependencyVisitor.convertImportStatementsToAbsolutePaths(
           fileContent,
         );
 
@@ -348,6 +381,7 @@ class CachedBuildRunner {
             _dependencyVisitor,
             files,
           ),
+          suffix: null,
           isTestFile: true,
         ),
       );
@@ -369,10 +403,11 @@ class CachedBuildRunner {
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> _fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
-    final libRegExp = RegExp(r"part '.+\.g\.dart';");
+    final partRegExp = RegExp(r"part '.+\.(.+)\.dart';");
+    final importRegExp = RegExp(r"import '.+\.([^g].*|g.+)\.dart';");
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
-    final List<String> libPathList = [];
+    final List<({String path, String? suffix})> libPathList = [];
 
     for (final entity in libDirectory.listSync(
       recursive: true,
@@ -382,8 +417,14 @@ class CachedBuildRunner {
         final filePath = entity.path.trim();
         final fileContent = entity.readAsStringSync();
 
-        if (libRegExp.hasMatch(fileContent)) {
-          libPathList.add(filePath);
+        final partMatch = partRegExp.firstMatch(fileContent);
+        if (partMatch != null) {
+          libPathList.add((path: filePath, suffix: partMatch.group(1)));
+        }
+
+        final importMatch = importRegExp.firstMatch(fileContent);
+        if (importMatch != null) {
+          libPathList.add((path: filePath, suffix: importMatch.group(1)));
         }
       }
     }
@@ -394,13 +435,13 @@ class CachedBuildRunner {
 
     return libPathList
         .map<CodeFile>(
-          (path) => CodeFile(
-            path: path,
-            digest: DigestUtils.generateDigestForClassFile(
-              _dependencyVisitor,
-              path,
-            ),
-          ),
+          (f) => CodeFile(
+              path: f.path,
+              digest: DigestUtils.generateDigestForClassFile(
+                _dependencyVisitor,
+                f.path,
+              ),
+              suffix: f.suffix),
         )
         .toList();
   }

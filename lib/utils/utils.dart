@@ -11,6 +11,7 @@ abstract class Utils {
   static String projectDirectory = '';
   static bool isVerbose = true;
   static bool isRedisUsed = false;
+  static bool isPruneEnabled = false;
 
   /// Initializes the app package name by reading it from pubspec.yaml.
   static void initAppPackageName() {

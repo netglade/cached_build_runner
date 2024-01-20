@@ -41,6 +41,7 @@ class DependencyVisitor {
 
   /// Method which returns back the dependant's paths of a class file
   Set<String> getDependenciesPath(String filePath) {
+    print(filePath);
     _dirName = path.dirname(filePath);
     final paths = _getDependenciesPath(filePath);
     reset();
@@ -49,22 +50,45 @@ class DependencyVisitor {
 
   Set<String> _getDependenciesPath(String filePath) {
     final dependencies = <String>{};
+    print('Read $filePath');
     final contents = File(filePath).readAsStringSync();
 
-    final classDependencies = _getClassDependency(contents);
-    final dependencyPaths = _resolveUri(contents, classDependencies);
+    final imports = convertImportStatementsToAbsolutePaths(contents);
+    // Logger.i('File $filePath ---  $imports');
 
-    dependencies.addAll(dependencyPaths);
+    // final importsList = [...imports[_relativeImportsConst]!, ...imports[_absoluteImportsConst]!];
+
+    // Logger.i('File $filePath ---  $importsList');
+
+    dependencies.add(filePath);
 
     /// Find out transitive dependencies
-    for (final dependencyPath in dependencyPaths) {
+    for (final import in imports) {
       /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
-      if (_hasNotVisited(dependencyPath)) {
-        _markVisited(dependencyPath);
-        final transitiveDependencies = _getDependenciesPath(dependencyPath);
+      if (_hasNotVisited(import)) {
+        _markVisited(import);
+        print(
+          'Import $import',
+        );
+        final transitiveDependencies = _getDependenciesPath(import);
         dependencies.addAll(transitiveDependencies);
       }
     }
+
+    // final classDependencies = _getClassDependency(contents);
+    // final dependencyPaths = _resolveUri(contents, classDependencies);
+
+    // dependencies.addAll(dependencyPaths);
+
+    // /// Find out transitive dependencies
+    // for (final dependencyPath in dependencyPaths) {
+    //   /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
+    //   if (_hasNotVisited(dependencyPath)) {
+    //     _markVisited(dependencyPath);
+    //     final transitiveDependencies = _getDependenciesPath(dependencyPath);
+    //     dependencies.addAll(transitiveDependencies);
+    //   }
+    // }
 
     return dependencies;
   }
@@ -75,9 +99,13 @@ class DependencyVisitor {
 
     final lines = dartSource.split('\n');
 
+    //print(lines);
+
     for (final line in lines) {
       final relativeMatch = relativeImportRegex.firstMatch(line);
       final packageMatch = packageImportRegex.firstMatch(line);
+
+      //print('line $line -- [R: ${relativeMatch != null}, P: ${packageMatch != null}]');
 
       if (relativeMatch != null) {
         final importedPath = relativeMatch.group(1);
