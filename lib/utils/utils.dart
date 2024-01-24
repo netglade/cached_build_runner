@@ -1,3 +1,5 @@
+// ignore_for_file: avoid-global-state
+
 import 'dart:io';
 
 import 'package:cached_build_runner/utils/logger.dart';
@@ -18,10 +20,7 @@ abstract class Utils {
     const searchString = 'name:';
 
     final pubspecFile = File(
-      path.join(
-        Utils.projectDirectory,
-        pubspecFileName,
-      ),
+      path.join(Utils.projectDirectory, pubspecFileName),
     );
 
     if (!pubspecFile.existsSync()) {
@@ -38,9 +37,9 @@ abstract class Utils {
   }
 
   /// Logs a header [title] to the console.
-  static void logHeader(String title) {
-    Logger.i(title);
-  }
+  // static void logHeader(String title) {
+  //   Logger.i(title);
+  // }
 
   /// Retrieves the file name from the given [path].
   static String getFileName(String path) {

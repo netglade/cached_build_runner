@@ -21,7 +21,6 @@ import 'package:cached_build_runner/core/build_runner_wrapper.dart';
 import 'package:cached_build_runner/core/cache_provider.dart';
 import 'package:cached_build_runner/core/file_parser.dart';
 import 'package:cached_build_runner/model/code_file.dart';
-import 'package:cached_build_runner/utils/constants.dart';
 import 'package:cached_build_runner/utils/digest_utils.dart';
 import 'package:cached_build_runner/utils/extension.dart';
 import 'package:cached_build_runner/utils/logger.dart';
@@ -54,7 +53,7 @@ class CachedBuildRunner implements Disposable {
 
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
-    Utils.logHeader(
+    Logger.header(
       'Preparing to watch files in directory: ${Utils.projectDirectory}',
     );
 
@@ -63,18 +62,10 @@ class CachedBuildRunner implements Disposable {
     /// perform a first build operation
     await build();
 
-    Utils.logHeader('Watching for file changes.');
+    Logger.header('Watching for file changes.');
 
     // let's listen for file changes in the project directory
     // specifically in "lib" irectory
-
-    final files = libDirectory
-        .listSync(recursive: true)
-        .where(
-          (e) => e is File && e.path.endsWith('.dart') && Constants.generatedPartFileRegex.allMatches(e.path).isEmpty,
-        )
-        .toList();
-    print(files.join('\n'));
     _libWatch = libDirectory.watchDartSourceCodeFiles().listen(_onFileSystemEvent);
   }
 
@@ -99,7 +90,7 @@ class CachedBuildRunner implements Disposable {
   ///   - [Exception] if there is an error while running `build_runner build` command.
 
   Future<void> build() async {
-    Utils.logHeader('Determining Files that needs code generation');
+    Logger.header('Determining Files that needs code generation');
 
     await _cacheProvider.ensurePruning();
 
@@ -113,8 +104,8 @@ class CachedBuildRunner implements Disposable {
     final goodFiles = mappedResult.good;
     final badFiles = mappedResult.bad;
 
-    Logger.v('No. of cached files: ${goodFiles.length}');
-    Logger.v('No. of non-cached files: ${badFiles.length}\n${badFiles.join('\n')}');
+    Logger.i('No. of cached files: ${goodFiles.length}');
+    Logger.i('No. of non-cached files: ${badFiles.length}\n${badFiles.join('\n')}');
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     final success = _buildRunnerWrapper.runBuild(badFiles);
@@ -137,7 +128,6 @@ class CachedBuildRunner implements Disposable {
   }
 
   bool _isCodeGenerationNeeded(FileSystemEvent e) {
-    print('Event ${e.name}: ${e.path}');
     switch (e.type) {
       case FileSystemEvent.modify:
         final newDigest = DigestUtils.generateDigestForSingleFile(e.path);
@@ -158,7 +148,7 @@ class CachedBuildRunner implements Disposable {
 
       case FileSystemEvent.delete:
         if (_contentDigestMap.containsKey(e.path)) {
-          _contentDigestMap.remove(e.path);
+          final _ = _contentDigestMap.remove(e.path);
 
           return true;
         }
@@ -170,7 +160,7 @@ class CachedBuildRunner implements Disposable {
   }
 
   void _synchronizedBuild() {
-    _buildLock.synchronized(build);
+    unawaited(_buildLock.synchronized(build));
   }
 
   void _onFileSystemEvent(FileSystemEvent event) {

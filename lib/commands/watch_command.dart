@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
-import 'package:cached_build_runner/args/args_parser.dart';
 import 'package:cached_build_runner/args/args_utils.dart';
+import 'package:cached_build_runner/args/argument_parser.dart';
 import 'package:cached_build_runner/commands/initializer.dart';
 import 'package:cached_build_runner/di_container.dart';
 

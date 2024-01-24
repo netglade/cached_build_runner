@@ -31,6 +31,10 @@ class Logger {
 
   /// Logs an information message.
   static void i(String message) {
+    _logger.i(message);
+  }
+
+  static void header(String message) {
     _loggerWithBox.i(message);
   }
 
@@ -48,6 +52,8 @@ class _LogFilter extends logger.LogFilter {
   bool shouldLog(logger.LogEvent event) {
     if (event.level == logger.Level.error) return true;
 
-    return Utils.isVerbose;
+    if (event.level == logger.Level.verbose && Utils.isVerbose) return true;
+
+    return event.level != logger.Level.verbose;
   }
 }

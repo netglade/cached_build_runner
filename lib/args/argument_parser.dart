@@ -36,8 +36,8 @@ class ArgumentParser {
     Utils.isPruneEnabled = result[ArgsUtils.prune] as bool;
   }
 
-  ArgParser _addFlagAndOption() {
-    return _argParser
+  void _addFlagAndOption() {
+    _argParser
       ..addFlag(
         ArgsUtils.quiet,
         abbr: 'q',

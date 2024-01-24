@@ -8,7 +8,7 @@ class BuildRunnerWrapper {
   const BuildRunnerWrapper();
   bool runBuild(List<CodeFile> files) {
     if (files.isEmpty) return true;
-    Utils.logHeader(
+    Logger.header(
       'Generating Codes for non-cached files, found ${files.length} files',
     );
 
@@ -18,7 +18,6 @@ class BuildRunnerWrapper {
     Logger.v('Running build_runner build...', showPrefix: false);
 
     final filterList = _getBuildFilterList(files);
-    Logger.v(filterList, showPrefix: false);
 
     /// TODO: let's check how we can use the build_runner package and include in this project
     /// instead of relying on the flutter pub run command
@@ -31,8 +30,8 @@ class BuildRunnerWrapper {
         'build_runner',
         'build',
         '--build-filter',
-        _getBuildFilterList(files),
-        //  '--delete-conflicting-outputs',
+        filterList,
+        '--delete-conflicting-outputs',
       ],
       workingDirectory: Utils.projectDirectory,
     );

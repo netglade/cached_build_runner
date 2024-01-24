@@ -1,3 +1,5 @@
+// ignore_for_file: prefer-match-file-name
+
 import 'dart:io';
 
 import 'package:cached_build_runner/utils/constants.dart';
@@ -14,8 +16,6 @@ extension FileExtn on File {
   bool isDartSourceCodeFile() {
     final matches = Constants.generatedPartFileRegex.allMatches(path);
 
-    //print('Path $path matches: $matches. Return ${path.endsWith('.dart') && matches.isEmpty}');
     return path.endsWith('.dart') && matches.isEmpty;
-    //  !path.endsWith('.g.dart') && !path.endsWith('.mocks.dart');
   }
 }

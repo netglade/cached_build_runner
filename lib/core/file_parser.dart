@@ -54,8 +54,6 @@ class FileParser {
       'Found ${libPathList.length} files in "lib/" that needs code generation',
     );
 
-    Logger.v(libPathList.join('\n'));
-
     return libPathList
         .map<CodeFile>(
           (f) => CodeFile(

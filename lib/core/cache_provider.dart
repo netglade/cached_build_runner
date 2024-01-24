@@ -94,17 +94,18 @@ class CacheProvider {
   }
 
   Future<void> cacheFiles(List<CodeFile> files) async {
-    Utils.logHeader(
-      'Caching new generated codes, caching ${files.length} files',
-    );
+    if (files.isEmpty) {
+      return Logger.header('No new files to cache');
+    }
+
+    Logger.header('Caching new ${files.length} files');
 
     final cacheEntry = <String, String>{};
 
     for (final file in files) {
       final generatedCodeFile = File(file.getGeneratedFilePath());
-      Logger.v(
-        'Caching generated code for: ${Utils.getFileName(generatedCodeFile.path)}',
-      );
+      Logger.v('Caching: ${Utils.getFileName(generatedCodeFile.path)}');
+
       final cachedFilePath = path.join(Utils.appCacheDirectory, file.digest);
       if (generatedCodeFile.existsSync()) {
         final _ = generatedCodeFile.copySync(cachedFilePath);
@@ -127,7 +128,7 @@ class CacheProvider {
   }
 
   Future<void> copyGeneratedCodesFor(List<CodeFile> files) async {
-    Utils.logHeader('Copying cached codes to project directory');
+    Logger.header('Copying cached files to project directory (${files.length} total)');
 
     for (final file in files) {
       final cachedGeneratedCodePath = await _dbOperation(
