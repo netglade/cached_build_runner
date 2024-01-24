@@ -103,7 +103,9 @@ class CachedBuildRunner implements Disposable {
     final badFiles = mappedResult.bad;
 
     Logger.i('No. of cached files: ${goodFiles.length}');
-    Logger.i('No. of non-cached files: ${badFiles.length}\n${badFiles.join('\n')}');
+    Logger.i('No. of non-cached files: ${badFiles.length}');
+
+    Logger.v(badFiles.map((e) => e.path).join('\n'));
 
     /// let's handle bad files - by generating the .g.dart / .mocks.dart files for them
     final success = _buildRunnerWrapper.runBuild(badFiles);

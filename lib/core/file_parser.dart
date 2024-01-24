@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_build_runner/core/dependency_visitor.dart';
 import 'package:cached_build_runner/model/code_file.dart';
+import 'package:cached_build_runner/utils/constants.dart';
 import 'package:cached_build_runner/utils/digest_utils.dart';
 import 'package:cached_build_runner/utils/extension.dart';
 import 'package:cached_build_runner/utils/logger.dart';
@@ -24,8 +25,6 @@ class FileParser {
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
-    final partRegExp = RegExp(r"part '.+\.(.+)\.dart';");
-
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
     final libPathList = <({String path, String? suffix})>[];
@@ -41,15 +40,23 @@ class FileParser {
       final filePath = entity.path.trim();
       final fileContent = entity.readAsStringSync();
 
-      final partMatch = partRegExp.firstMatch(fileContent);
+      final partMatch = Constants.partFileRegex.firstMatch(fileContent);
 
-      if (partMatch == null) continue;
+      if (partMatch != null) {
+        libPathList.add((path: filePath, suffix: partMatch.group(1)));
+        continue;
+      }
 
-      libPathList.add((path: filePath, suffix: partMatch.group(1)));
+      final importMatch = Constants.generatedFileImportRegExp.firstMatch(fileContent);
+
+      if (importMatch != null) {
+        libPathList.add((path: filePath, suffix: importMatch.group(1)));
+        continue;
+      }
     }
 
-    Logger.v(
-      'Found ${libPathList.length} files in "lib/" that needs code generation',
+    Logger.i(
+      'Found ${libPathList.length} files in "lib/" that supports code generation',
     );
 
     return libPathList

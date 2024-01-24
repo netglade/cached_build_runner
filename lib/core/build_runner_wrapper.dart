@@ -24,15 +24,7 @@ class BuildRunnerWrapper {
     /// there can be issues with flutter being in the path.
     final process = Process.runSync(
       'flutter',
-      [
-        'pub',
-        'run',
-        'build_runner',
-        'build',
-        '--build-filter',
-        filterList,
-        '--delete-conflicting-outputs',
-      ],
+      ['pub', 'run', 'build_runner', 'build', '--build-filter', filterList],
       workingDirectory: Utils.projectDirectory,
     );
 

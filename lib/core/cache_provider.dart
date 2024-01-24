@@ -36,7 +36,7 @@ class CacheProvider {
 
     final database = await _database;
 
-    Logger.v('Prunning is enabled - checking pubpsec.lock');
+    Logger.i('Prunning is enabled - checking pubpsec.lock');
 
     final pubspecLockPath = path.join(Utils.projectDirectory, Constants.pubpsecLockFileName);
     final pubspecLock = File(pubspecLockPath);
@@ -58,7 +58,7 @@ class CacheProvider {
     Logger.v('Will prune? ${digest != existingDigest ? 'YES' : 'NO'}');
 
     if (existingDigest != null && digest != existingDigest) {
-      Logger.v('!!! Pruning cache as pubspec.lock was changed from last time !!!');
+      Logger.i('!!! Pruning cache as pubspec.lock was changed from last time !!!');
       await database.prune(keysToKeep: [Constants.pubpsecLockFileName]);
     }
 

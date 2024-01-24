@@ -7,14 +7,14 @@ import 'package:cached_build_runner/utils/constants.dart';
 extension DirectoryExtn on Directory {
   Stream<FileSystemEvent> watchDartSourceCodeFiles() {
     return watch(recursive: true).where(
-      (e) => e.path.endsWith('.dart') && Constants.generatedPartFileRegex.allMatches(e.path).isEmpty,
+      (e) => e.path.endsWith('.dart') && Constants.partFileExtensionRegex.allMatches(e.path).isEmpty,
     );
   }
 }
 
 extension FileExtn on File {
   bool isDartSourceCodeFile() {
-    final matches = Constants.generatedPartFileRegex.allMatches(path);
+    final matches = Constants.partFileExtensionRegex.allMatches(path);
 
     return path.endsWith('.dart') && matches.isEmpty;
   }
