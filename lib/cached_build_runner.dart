@@ -97,8 +97,6 @@ class CachedBuildRunner implements Disposable {
     final libFiles = _fileParser.fetchFilePathsFromLib();
     final files = List<CodeFile>.of(libFiles);
 
-    //..addAll(testFiles);
-
     final mappedResult = await _cacheProvider.mapFilesToCache(files);
 
     final goodFiles = mappedResult.good;
@@ -125,6 +123,12 @@ class CachedBuildRunner implements Disposable {
   Future<void> onDispose() async {
     await _pubpsecWatch?.cancel();
     await _libWatch?.cancel();
+  }
+
+  Future<void> prune() {
+    Logger.header('Pruning cache directory');
+
+    return _cacheProvider.prune();
   }
 
   bool _isCodeGenerationNeeded(FileSystemEvent e) {
@@ -176,7 +180,6 @@ class CachedBuildRunner implements Disposable {
       followLinks: false,
     )) {
       if (entity is File && entity.isDartSourceCodeFile()) {
-        Logger.v('ContentDigest: ${entity.path}');
         _contentDigestMap[entity.path] = DigestUtils.generateDigestForSingleFile(
           entity.path,
         );

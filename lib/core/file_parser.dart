@@ -25,8 +25,6 @@ class FileParser {
   List<CodeFile> fetchFilePathsFromLib() {
     /// Files in "lib/" that needs code generation
     final partRegExp = RegExp(r"part '.+\.(.+)\.dart';");
-    final packageImportRegExp = RegExp("import\\s+'package:${Utils.appPackageName}.+\\.([^g].*|g.+)\\.dart';");
-    final relativeImportRegExp = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
 
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 

@@ -33,7 +33,7 @@ class ArgumentParser {
     Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
 
     // enable prunning
-    Utils.isPruneEnabled = result[ArgsUtils.prune] as bool;
+    Utils.isPruneEnabled = result[ArgsUtils.lockPrune] as bool;
   }
 
   void _addFlagAndOption() {
@@ -52,7 +52,7 @@ class ArgumentParser {
         negatable: false,
       )
       ..addFlag(
-        ArgsUtils.prune,
+        ArgsUtils.lockPrune,
         abbr: 'p',
         help: 'Enable pruning cache directory when pubspec.lock was changed since last build.',
         defaultsTo: true,

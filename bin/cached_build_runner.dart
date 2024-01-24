@@ -1,5 +1,6 @@
 import 'package:args/command_runner.dart';
 import 'package:cached_build_runner/commands/build_command.dart';
+import 'package:cached_build_runner/commands/prune_command.dart';
 import 'package:cached_build_runner/commands/watch_command.dart';
 
 Future<void> main(List<String> arguments) async {
@@ -8,7 +9,8 @@ Future<void> main(List<String> arguments) async {
 
   final runner = CommandRunner<void>(commandName, commandDescription)
     ..addCommand(BuildCommand())
-    ..addCommand(WatchCommand());
+    ..addCommand(WatchCommand())
+    ..addCommand(PruneCommand());
 
   await runner.run(arguments);
 }

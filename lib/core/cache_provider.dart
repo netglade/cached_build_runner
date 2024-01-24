@@ -98,7 +98,7 @@ class CacheProvider {
       return Logger.header('No new files to cache');
     }
 
-    Logger.header('Caching new ${files.length} files');
+    Logger.header('Caching ${files.length} files');
 
     final cacheEntry = <String, String>{};
 
@@ -146,6 +146,10 @@ class CacheProvider {
         );
       }
     }
+  }
+
+  Future<void> prune() {
+    return _dbOperation((db) => db.prune(keysToKeep: []));
   }
 
   Future<T> _dbOperation<T>(Transaction<T> op) async {

@@ -1,11 +1,12 @@
 abstract class ArgsUtils {
-  /// commands
+  /// Commands.
   static const watch = 'watch';
   static const build = 'build';
+  static const prune = 'prune';
 
-  /// argument flags & options
+  /// Argument flags & options.
   static const quiet = 'quiet';
   static const useRedis = 'redis';
   static const cacheDirectory = 'cache-directory';
-  static const prune = 'prune';
+  static const lockPrune = 'prune';
 }
