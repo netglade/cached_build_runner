@@ -1,5 +1,7 @@
 import 'dart:async';
 
+typedef Transaction<T> = Future<T> Function(DatabaseService db);
+
 /// An interface for a database service used to cache generated code.
 abstract class DatabaseService {
   /// Initializes the database service.
@@ -39,4 +41,6 @@ abstract class DatabaseService {
   /// Flushes the database service. Flushing to disk, or closing network connections
   /// could be done here.
   Future<void> flush();
+
+  Future<T> transaction<T>(Transaction<T> transactionCallback);
 }

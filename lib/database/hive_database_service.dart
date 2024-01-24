@@ -1,24 +1,22 @@
 import 'dart:async';
 
+import 'package:cached_build_runner/database/database_service.dart';
 import 'package:hive/hive.dart';
-
-import 'database_service.dart';
 
 /// An implementation of [DatabaseService] using Hive.
 class HiveDatabaseService implements DatabaseService {
   final String dirPath;
-
-  HiveDatabaseService(this.dirPath);
 
   static const _tag = 'HiveDatabaseService';
   static const _boxName = 'generated-file-box';
 
   late Box<String> _box;
 
+  HiveDatabaseService(this.dirPath);
+
   @override
   Future<void> init() async {
     Hive.init(dirPath);
-    print('Hive: $dirPath');
     _box = await Hive.openBox<String>(_boxName);
   }
 
@@ -58,7 +56,7 @@ class HiveDatabaseService implements DatabaseService {
   FutureOr<Map<String, String>> getCachedFilePathForBulk(
     Iterable<String> digests,
   ) {
-    final Map<String, String> data = {};
+    final data = <String, String>{};
 
     for (final digest in digests) {
       data[digest] = getCachedFilePath(digest) as String;
@@ -71,7 +69,7 @@ class HiveDatabaseService implements DatabaseService {
   FutureOr<Map<String, bool>> isMappingAvailableForBulk(
     Iterable<String> digests,
   ) {
-    final Map<String, bool> data = {};
+    final data = <String, bool>{};
 
     for (final digest in digests) {
       data[digest] = isMappingAvailable(digest) as bool;
@@ -92,18 +90,28 @@ class HiveDatabaseService implements DatabaseService {
 
   @override
   Future<void> prune({required List<String> keysToKeep}) async {
-    final saved = <String, dynamic>{};
+    final saved = <String, String>{};
 
-    for (var key in keysToKeep) {
-      saved[key] = _box.get(key);
+    for (final key in keysToKeep) {
+      final value = _box.get(key);
+      if (value != null) saved[key] = value;
     }
 
-    _box.clear();
+    final _ = await _box.clear();
 
-    for (var key in keysToKeep) {
-      _box.put(key, saved[key]);
+    for (final key in keysToKeep) {
+      await _box.put(key, saved[key]!);
     }
 
     await flush();
+  }
+
+  @override
+  Future<T> transaction<T>(Transaction<T> transactionCallback) async {
+    final result = await transactionCallback(this);
+
+    await flush();
+
+    return result;
   }
 }

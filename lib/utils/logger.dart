@@ -1,6 +1,5 @@
+import 'package:cached_build_runner/utils/utils.dart';
 import 'package:logger/logger.dart' as logger;
-
-import 'utils.dart';
 
 /// A class that provides logging functionality.
 class Logger {
@@ -9,10 +8,7 @@ class Logger {
     printer: logger.PrettyPrinter(
       methodCount: 0,
       errorMethodCount: 0,
-      lineLength: 120,
-      colors: true,
       printEmojis: false,
-      printTime: false,
       noBoxingByDefault: true,
     ),
   );
@@ -22,27 +18,24 @@ class Logger {
     printer: logger.PrettyPrinter(
       methodCount: 0,
       errorMethodCount: 0,
-      lineLength: 120,
-      colors: true,
       printEmojis: false,
-      printTime: false,
     ),
   );
 
   /// Logs a verbose message.
   ///
   /// If [showPrefix] is `true`, the message will be prefixed with a vertical bar.
-  static v(String message, {bool showPrefix = true}) {
+  static void v(String message, {bool showPrefix = true}) {
     _logger.v('${showPrefix ? '│ ' : ''}$message');
   }
 
   /// Logs an information message.
-  static i(String message) {
+  static void i(String message) {
     _loggerWithBox.i(message);
   }
 
   /// Logs an error message.
-  static e(String message) {
+  static void e(String message) {
     _loggerWithBox.e(message);
   }
 }
@@ -54,6 +47,7 @@ class _LogFilter extends logger.LogFilter {
   @override
   bool shouldLog(logger.LogEvent event) {
     if (event.level == logger.Level.error) return true;
+
     return Utils.isVerbose;
   }
 }

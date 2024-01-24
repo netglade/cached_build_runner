@@ -10,6 +10,7 @@ environment:
 dependencies:
   args: ^2.4.0
   crypto: ^3.0.1
+  get_it: ^7.6.7
   hive: ^2.2.3
   logger: ^1.1.0
   path: ^1.8.2
@@ -18,4 +19,5 @@ dependencies:
 
 dev_dependencies:
   lints: 3.0.0
+  netglade_analysis: ^7.0.0
   test: 1.25.0

@@ -1,30 +1,68 @@
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/utils.dart';
 import 'package:path/path.dart' as path;
 
-import '../utils/utils.dart';
-
 class DependencyVisitor {
-  static const _relativeImportsConst = 'relative-imports';
-  static const _absoluteImportsConst = 'absolute-imports';
+  /// Regex for class name.
+  final classNameRegex = RegExp(r'(?:mixin|abstract class|class)\s+(\w+)');
 
-  /// Regex for class name
-  final classNameRegex = RegExp(r"(?:mixin|abstract class|class)\s+(\w+)");
+  /// Regex for `extends`, `implements` & `with`.
+  final extendsRegex = RegExp(r'extends\s+(\w+)');
+  final implementsRegex = RegExp(r'implements\s+([\w\s,]+)');
+  final withRegex = RegExp(r'with\s+([\w\s,]+)');
 
-  /// Regex for `extends`, `implements` & `with`
-  final extendsRegex = RegExp(r"extends\s+(\w+)");
-  final implementsRegex = RegExp(r"implements\s+([\w\s,]+)");
-  final withRegex = RegExp(r"with\s+([\w\s,]+)");
-
-  /// Regex for parsing import statements
+  /// Regex for parsing import statements.
   final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
   final packageImportRegex = RegExp(
-    'import\\s+\'package:${Utils.appPackageName}(.*)\';',
+    "import\\s+'package:${Utils.appPackageName}/(.*)';",
   );
+
+  static const _relativeImportsConst = 'relative-imports';
+  static const _absoluteImportsConst = 'absolute-imports';
 
   final Map<String, bool> _visitorMap = {};
 
   String _dirName = '';
+
+  void reset() {
+    _dirName = '';
+    _visitorMap.clear();
+  }
+
+  /// Method which returns back the dependant's paths of a class file.
+  Set<String> getDependenciesPath(String filePath) {
+    _dirName = path.dirname(filePath);
+    final paths = _getDependenciesPath(filePath);
+    reset();
+
+    return paths;
+  }
+
+  List<String> convertImportStatementsToAbsolutePaths(
+    String contents, {
+    String directory = 'lib',
+  }) {
+    final importLines = _getImportLines(contents);
+    final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
+    final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
+
+    final paths = <String>[];
+
+    /// absolute import lines
+    for (final import in absoluteImportLines) {
+      paths.add(
+        path.join(Utils.projectDirectory, directory, import.substring(1)),
+      );
+    }
+
+    /// relative import lines
+    for (final import in relativeImportLines) {
+      paths.add(path.normalize(path.join(_dirName, import)));
+    }
+
+    return paths;
+  }
 
   bool _hasNotVisited(String filePath) {
     return _visitorMap[filePath] == null;
@@ -34,23 +72,8 @@ class DependencyVisitor {
     _visitorMap[filePath] = true;
   }
 
-  void reset() {
-    _dirName = '';
-    _visitorMap.clear();
-  }
-
-  /// Method which returns back the dependant's paths of a class file
-  Set<String> getDependenciesPath(String filePath) {
-    print(filePath);
-    _dirName = path.dirname(filePath);
-    final paths = _getDependenciesPath(filePath);
-    reset();
-    return paths;
-  }
-
   Set<String> _getDependenciesPath(String filePath) {
     final dependencies = <String>{};
-    print('Read $filePath');
     final contents = File(filePath).readAsStringSync();
 
     final imports = convertImportStatementsToAbsolutePaths(contents);
@@ -67,9 +90,6 @@ class DependencyVisitor {
       /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
       if (_hasNotVisited(import)) {
         _markVisited(import);
-        print(
-          'Import $import',
-        );
         final transitiveDependencies = _getDependenciesPath(import);
         dependencies.addAll(transitiveDependencies);
       }
@@ -109,44 +129,25 @@ class DependencyVisitor {
 
       if (relativeMatch != null) {
         final importedPath = relativeMatch.group(1);
-        if (importedPath != null) relativeImports.add(importedPath);
+        if (importedPath != null) {
+          print('ADD REL: $importedPath');
+          relativeImports.add(importedPath);
+        }
       }
 
       if (packageMatch != null) {
         final importedPath = packageMatch.group(1);
-        if (importedPath != null) absoluteImports.add(importedPath);
+        if (importedPath != null) {
+          print('ADD ABS: $importedPath');
+          absoluteImports.add(importedPath);
+        }
       }
     }
 
     return {
-      _relativeImportsConst: relativeImports,
       _absoluteImportsConst: absoluteImports,
+      _relativeImportsConst: relativeImports,
     };
-  }
-
-  List<String> convertImportStatementsToAbsolutePaths(
-    String contents, {
-    String directory = 'lib',
-  }) {
-    final importLines = _getImportLines(contents);
-    final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
-    final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
-
-    final paths = <String>[];
-
-    /// absolute import lines
-    for (final import in absoluteImportLines) {
-      paths.add(
-        path.join(Utils.projectDirectory, directory, import.substring(1)),
-      );
-    }
-
-    /// relative import lines
-    for (final import in relativeImportLines) {
-      paths.add(path.normalize(path.join(_dirName, import)));
-    }
-
-    return paths;
   }
 
   Set<String> _resolveUri(String contents, Set<String> dependencies) {

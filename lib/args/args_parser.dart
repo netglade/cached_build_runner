@@ -1,14 +1,39 @@
 import 'package:args/args.dart';
-
-import '../utils/log.dart';
-import '../utils/utils.dart';
-import 'args_utils.dart';
+import 'package:cached_build_runner/args/args_utils.dart';
+import 'package:cached_build_runner/utils/logger.dart';
+import 'package:cached_build_runner/utils/utils.dart';
 
 class ArgumentParser {
   final ArgParser _argParser;
 
   ArgumentParser(this._argParser) {
     _addFlagAndOption();
+  }
+
+  void parseArgs(Iterable<String>? arguments) {
+    if (arguments == null) return;
+
+    /// parse all args
+    final result = _argParser.parse(arguments);
+
+    /// cache directory
+    if (result.wasParsed(ArgsUtils.cacheDirectory)) {
+      Utils.appCacheDirectory = result[ArgsUtils.cacheDirectory] as String;
+    } else {
+      Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
+      Logger.i(
+        "As no '${ArgsUtils.cacheDirectory}' was specified, using the default directory: ${Utils.appCacheDirectory}",
+      );
+    }
+
+    /// quiet
+    Utils.isVerbose = !result.wasParsed(ArgsUtils.quiet);
+
+    /// use redis
+    Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
+
+    // enable prunning
+    Utils.isPruneEnabled = result[ArgsUtils.prune] as bool;
   }
 
   ArgParser _addFlagAndOption() {
@@ -30,7 +55,6 @@ class ArgumentParser {
         ArgsUtils.prune,
         abbr: 'p',
         help: 'Enable pruning cache directory when pubspec.lock was changed since last build.',
-        negatable: true,
         defaultsTo: true,
       )
       ..addSeparator('')
@@ -39,31 +63,5 @@ class ArgumentParser {
         abbr: 'c',
         help: 'Provide the directory where this tool can keep the caches.',
       );
-  }
-
-  void parseArgs(Iterable<String>? arguments) {
-    if (arguments == null) return;
-
-    /// parse all args
-    final result = _argParser.parse(arguments);
-
-    /// cache directory
-    if (result.wasParsed(ArgsUtils.cacheDirectory)) {
-      Utils.appCacheDirectory = result[ArgsUtils.cacheDirectory];
-    } else {
-      Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
-      Logger.i(
-        "As no '${ArgsUtils.cacheDirectory}' was specified, using the default directory: ${Utils.appCacheDirectory}",
-      );
-    }
-
-    /// quiet
-    Utils.isVerbose = !result.wasParsed(ArgsUtils.quiet);
-
-    /// use redis
-    Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
-
-    // enable prunning
-    Utils.isPruneEnabled = result[ArgsUtils.prune];
   }
 }

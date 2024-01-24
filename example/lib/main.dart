@@ -33,6 +33,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _counterModel = CounterModel(
     description: 'Model which can keep a count.',
+    x: 'a',
   );
 
   void _incrementCounter() {

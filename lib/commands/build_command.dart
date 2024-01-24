@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:cached_build_runner/di_container.dart';
 
 import '../args/args_parser.dart';
 import '../args/args_utils.dart';
@@ -15,14 +16,15 @@ class BuildCommand extends Command {
   }
 
   @override
-  String get description =>
-      'Performs a single build on the specified targets and then exits.';
+  String get description => 'Performs a single build on the specified targets and then exits.';
 
   @override
   String get name => ArgsUtils.build;
 
   @override
   FutureOr? run() async {
+    DiContainer.setup();
+
     /// parse args for the command
     _argumentParser.parseArgs(argResults?.arguments);
 

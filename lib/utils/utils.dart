@@ -1,8 +1,7 @@
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/logger.dart';
 import 'package:path/path.dart' as path;
-
-import 'log.dart';
 
 /// A utility class that provides helper methods for various operations.
 abstract class Utils {
@@ -18,10 +17,12 @@ abstract class Utils {
     const pubspecFileName = 'pubspec.yaml';
     const searchString = 'name:';
 
-    final pubspecFile = File(path.join(
-      Utils.projectDirectory,
-      pubspecFileName,
-    ));
+    final pubspecFile = File(
+      path.join(
+        Utils.projectDirectory,
+        pubspecFileName,
+      ),
+    );
 
     if (!pubspecFile.existsSync()) {
       reportError(
@@ -56,12 +57,7 @@ abstract class Utils {
     const defaultCacheDirectoryName = '.cached_build_runner';
     String homeDir;
 
-    if (Platform.isWindows) {
-      homeDir = Platform.environment['USERPROFILE'] ?? '';
-    } else {
-      homeDir = Platform.environment['HOME'] ?? '';
-    }
-
+    homeDir = Platform.isWindows ? Platform.environment['USERPROFILE'] ?? '' : Platform.environment['HOME'] ?? '';
     if (homeDir.isEmpty) {
       reportError(
         'Could not set default cache directory. Please use the --cache-directory flag to provide a cache directory.',
