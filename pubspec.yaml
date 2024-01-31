@@ -1,6 +1,6 @@
 name: cached_build_runner
 description: Optimizes the build_runner by caching generated codes for non changed .dart files
-version: 0.1.0
+version: 0.1.0-pre2
 homepage: https://github.com/jyotirmoy-paul/cached_build_runner
 maintainer: Jyotirmoy Paul (@jyotirmoy-paul)
 

@@ -19,6 +19,7 @@ class CacheArgumentParser {
     /// cache directory
     if (result.wasParsed(ArgsUtils.args.cacheDirectory)) {
       Utils.appCacheDirectory = result[ArgsUtils.args.cacheDirectory] as String;
+      Logger.i('Using "${Utils.appCacheDirectory}" as cache directory');
     } else {
       Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
       Logger.i(

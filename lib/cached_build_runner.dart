@@ -170,24 +170,6 @@ class CachedBuildRunner implements Disposable {
                     ),
             )
             .toList(),
-
-        // [
-
-        //   Row(
-        //     cells: [
-        //       Cell('Real Planets', rowSpan: 8, style: CellStyle(alignment: TextAlignment.MiddleCenter)),
-        //       Cell('Mercury'),
-        //     ],
-        //   ),
-        //   Row(cells: [Cell('Venus')]),
-        //   Row(cells: [Cell('Earth')]),
-        //   Row(cells: [Cell('Mars')]),
-        //   Row(cells: [Cell('Jupiter')]),
-        //   Row(cells: [Cell('Saturn')]),
-        //   Row(cells: [Cell('Uranus')]),
-        //   Row(cells: [Cell('Neptune')]),
-        //   Row(cells: [Cell('Very Fake Planets'), Cell('Pluto')]),
-        // ],
       ),
     ).render(border: TextBorder.DEFAULT);
 
