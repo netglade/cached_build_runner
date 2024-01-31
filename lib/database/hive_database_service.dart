@@ -114,4 +114,16 @@ class HiveDatabaseService implements DatabaseService {
 
     return result;
   }
+
+  @override
+  Future<Map<String, String>> getAllData() {
+    final result = <String, String>{};
+    for (final key in _box.keys) {
+      final value = _box.get(key);
+
+      result[key as String] = value!;
+    }
+
+    return Future.value(result);
+  }
 }

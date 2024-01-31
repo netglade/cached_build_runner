@@ -2,34 +2,36 @@ import 'dart:async';
 
 import 'package:args/command_runner.dart';
 import 'package:cached_build_runner/args/args_utils.dart';
-import 'package:cached_build_runner/args/argument_parser.dart';
+import 'package:cached_build_runner/args/build_and_watch_argument_parser.dart';
+import 'package:cached_build_runner/cached_build_runner.dart';
 import 'package:cached_build_runner/commands/initializer.dart';
-import 'package:cached_build_runner/di_container.dart';
+import 'package:get_it/get_it.dart';
 
 class BuildCommand extends Command<void> {
-  late final ArgumentParser _argumentParser;
+  late final BuildAndWatchArgumentParser _argumentParser;
   final Initializer _initializer;
+  final CachedBuildRunner _cachedBuildRunner;
 
   @override
   String get description => 'Performs a single build on the specified targets and then exits.';
 
   @override
-  String get name => ArgsUtils.build;
+  String get name => ArgsUtils.commands.build;
 
-  BuildCommand() : _initializer = const Initializer() {
-    _argumentParser = ArgumentParser(argParser);
+  BuildCommand({CachedBuildRunner? cachedBuildRunner})
+      : _initializer = const Initializer(),
+        _cachedBuildRunner = cachedBuildRunner ?? GetIt.I<CachedBuildRunner>() {
+    _argumentParser = BuildAndWatchArgumentParser(argParser);
   }
 
   @override
   Future<void> run() {
-    DiContainer.setup();
-
     /// parse args for the command
     _argumentParser.parseArgs(argResults?.arguments);
 
     /// let's get the cachedBuildRunner and execute the build
-    final cachedBuildRunner = _initializer.init();
+    _initializer.init();
 
-    return cachedBuildRunner.build();
+    return _cachedBuildRunner.build();
   }
 }

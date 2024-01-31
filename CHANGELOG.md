@@ -6,6 +6,9 @@
 - Support part file imports, relative imports, package imports.
 - Support generated files that are imported rather than as "part" file.
 - Support other generated files, not just .g.dart.
+- Add cache commands
+  - Prune - clears cache directory
+  - List - list files, their actual hash and dirty state
 
 **Breaking change**
 - Drop support for "redis".

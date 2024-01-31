@@ -7,6 +7,8 @@ abstract class DatabaseService {
   /// Initializes the database service.
   Future<void> init();
 
+  Future<Map<String, String>> getAllData();
+
   /// Checks if the mapping is available for the given digests in bulk.
   FutureOr<Map<String, bool>> isMappingAvailableForBulk(
     Iterable<String> digests,

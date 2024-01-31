@@ -152,6 +152,10 @@ class CacheProvider {
     return _dbOperation((db) => db.prune(keysToKeep: []));
   }
 
+  Future<Map<String, String>> listCachedFiles() {
+    return _dbOperation((db) => db.getAllData());
+  }
+
   Future<T> _dbOperation<T>(Transaction<T> op) async {
     final db = await _database;
 

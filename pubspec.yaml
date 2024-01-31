@@ -8,13 +8,16 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
+  ansicolor: ^2.0.2
   args: ^2.4.0
+  barbecue: ^0.5.0
   crypto: ^3.0.1
   get_it: ^7.6.7
   hive: ^2.2.3
   logger: ^1.1.0
   path: ^1.8.2
   synchronized: ^3.0.1
+  text_table: ^4.0.3
 
 dev_dependencies:
   netglade_analysis: ^7.0.0

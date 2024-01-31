@@ -13,7 +13,7 @@ class CounterModel2 extends BaseClass {
 
   CounterModel2({
     this.count = 0,
-    this.description = 'descriptionsadsadasaa',
+    this.description = 'descriptionsadsadasaaa',
     required this.user,
   });
 

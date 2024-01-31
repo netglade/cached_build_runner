@@ -8,23 +8,32 @@ Cached Build Runner is a Dart package that optimizes the build_runner by caching
 cached_build_runner <command> [arguments]
 ```
 
-### Usage
+### Commands
 Global options:
 -h, --help    Print this usage information.
 
 Available commands:
-* **build**:  Performs a single build on the specified targets and then exits.
-* **watch**:   Builds the specified targets, watching the file system for updates and rebuilding as appropriate.
+* **build**: Performs a single build on the specified targets and then exits.
+* **watch**: Builds the specified targets, watching the file system for updates and rebuilding as appropriate.
+* **cache**: Commands for manipulating cache
 
 Available arguments:
 * -h, --help: Print out usage instructions.
 * -v, --verbose: Enables verbose logs.
 * -d, --debug: Enables even more verbose logs.
 * -p, --[no]prune: Enable pruning cache directory when pubspec.lock was changed since last build. Defaults true.
-
 * -c, --cache-directory: Provide the directory where this tool can keep the caches.
 
-# Cached Build Runner
+## Cache sub-commands
+* **prune**: Clear cache directory.
+* **list**: List table of files with hash (digest) and their dirty state.
+
+arguments
+* -h, --help: Print out usage instructions.
+* -v, --verbose: Enables verbose logs.
+* -c, --cache-directory: Provide the directory where this tool can keep the caches.
+
+# Installation
 Add the package to your pubspec.yaml file under dev_dependencies:
 
 ```yaml

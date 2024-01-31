@@ -17,6 +17,8 @@ library cached_build_runner;
 import 'dart:async';
 import 'dart:io';
 
+import 'package:ansicolor/ansicolor.dart';
+import 'package:barbecue/barbecue.dart';
 import 'package:cached_build_runner/core/build_runner_wrapper.dart';
 import 'package:cached_build_runner/core/cache_provider.dart';
 import 'package:cached_build_runner/core/file_parser.dart';
@@ -28,6 +30,8 @@ import 'package:cached_build_runner/utils/utils.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as path;
 import 'package:synchronized/synchronized.dart' as sync;
+
+typedef _CachedFileInfo = ({String path, String digest, bool dirty});
 
 class CachedBuildRunner implements Disposable {
   final FileParser _fileParser;
@@ -119,6 +123,76 @@ class CachedBuildRunner implements Disposable {
     await _cacheProvider.cacheFiles(badFiles);
 
     /// We are done, probably?
+  }
+
+  Future<void> listAllCachedFiles() async {
+    final libFiles = _fileParser.getFilesNeedingGeneration();
+    final files = List<CodeFile>.of(libFiles);
+
+    final mappedResult = await _cacheProvider.mapFilesToCache(files);
+
+    final goodFiles = mappedResult.good.map<_CachedFileInfo>((e) => (path: e.path, digest: e.digest, dirty: false));
+    final badFiles = mappedResult.bad.map((e) => (path: e.path, digest: e.digest, dirty: true));
+
+    final mappedFiles = [...goodFiles, ...badFiles]..sort((a, b) => a.path.compareTo(b.path));
+
+    // final table = const TableRenderer(border: Border.simple).render(
+    //   mappedFiles.map((e) => [e.path, e.digest, e.dirty].toList()),
+    //   columns: [ColSpec(name: 'File'), ColSpec(name: 'Digest'), ColSpec(name: 'Dirty')],
+    //   width: 100,
+    // );
+    final redPen = AnsiPen()..red(bold: true);
+    final table = Table(
+      cellStyle: const CellStyle(
+        borderBottom: true,
+        borderRight: true,
+        borderLeft: true,
+        borderTop: true,
+        alignment: TextAlignment.MiddleLeft,
+      ),
+      header: const TableSection(
+        rows: [
+          Row(
+            cells: [Cell('Path'), Cell('Digest'), Cell('Dirty')],
+            cellStyle: CellStyle(borderBottom: true),
+          ),
+        ],
+      ),
+      body: TableSection(
+        rows: mappedFiles
+            .map<Row>(
+              (e) => e.dirty
+                  ? Row(
+                      cells: [Cell(redPen(e.path)), Cell(redPen(e.digest)), Cell(redPen(e.dirty.toString()))],
+                    )
+                  : Row(
+                      cells: [Cell(e.path), Cell(e.digest), Cell(e.dirty.toString())],
+                    ),
+            )
+            .toList(),
+
+        // [
+
+        //   Row(
+        //     cells: [
+        //       Cell('Real Planets', rowSpan: 8, style: CellStyle(alignment: TextAlignment.MiddleCenter)),
+        //       Cell('Mercury'),
+        //     ],
+        //   ),
+        //   Row(cells: [Cell('Venus')]),
+        //   Row(cells: [Cell('Earth')]),
+        //   Row(cells: [Cell('Mars')]),
+        //   Row(cells: [Cell('Jupiter')]),
+        //   Row(cells: [Cell('Saturn')]),
+        //   Row(cells: [Cell('Uranus')]),
+        //   Row(cells: [Cell('Neptune')]),
+        //   Row(cells: [Cell('Very Fake Planets'), Cell('Pluto')]),
+        // ],
+      ),
+    ).render(border: TextBorder.DEFAULT);
+
+    //ignore: avoid_print, printing table.
+    print(table);
   }
 
   @override
