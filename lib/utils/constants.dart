@@ -8,10 +8,13 @@ class Constants {
   static final partOfFileRegex = RegExp("part of '(.+)';");
 
   //static final appPackageImportRegex = RegExp("import\\s+'package:${Utils.appPackageName}.+\\.dart';");
-  static final appPackageImportRegex = RegExp('import\\s+[\'"]package:${Utils.appPackageName}/(.*)[\'"];');
-  static final relativeOrPartFileImportRegex =
-      RegExp(r'''^\h*(?:import|part)\h+(?:\'|\")((?:.+\/[^\.]+.dart)|(?:[^\.\/]+.dart))(?:\'|\")\h*;''');
-  static final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
+  static final appPackageImportRegex =
+      RegExp('import\\s+[\'"]package:${Utils.appPackageName}/(.*)[\'"];', multiLine: true);
+  static final relativeOrPartFileImportRegex = RegExp(
+    r'''^\s*(?:import|part)\s+(?:\'|\")((?:(?!package:).+\/[^\.]+.dart)|(?:(?!package:)[^\.\/]+.dart))(?:\'|\")\s*;''',
+    multiLine: true,
+  );
+  static final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''', multiLine: true);
 
   // static final packageImportPartFileRegExp = RegExp(r"import\s+'package:.+\.([^g].*|g.+)\.dart';");
   // static final relativeImportPartFileRegExp = RegExp(r'''import\s+['\"](?!package:)(?<importPath>.*?)['\"]''');

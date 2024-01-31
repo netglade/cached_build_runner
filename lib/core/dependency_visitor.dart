@@ -22,21 +22,25 @@ class DependencyVisitor {
   /// Method which returns back the dependant's paths of a class file.
   Set<String> getDependenciesPath(String filePath) {
     _dirName = path.dirname(filePath);
+    Logger.d('Depdencies for $filePath');
     final paths = _getDependenciesPath(filePath);
+
+    Logger.d('=================================');
     reset();
 
     return paths;
   }
 
-  List<String> convertImportStatementsToAbsolutePaths(
+  List<String> _convertImportStatementsToAbsolutePaths(
     String filePath,
     String contents, {
     String directory = 'lib',
   }) {
-    final importLines = _getImportLines(contents);
+    Logger.d('File: $filePath');
 
+    final importLines = _getImportLines(contents);
     final res = importLines.entries.map((value) => '${value.key}: ${value.value}').join('\n');
-    Logger.d('File: $filePath:\n $res');
+    Logger.d('$res\n');
 
     final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
     final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
@@ -68,7 +72,7 @@ class DependencyVisitor {
     final dependencies = <String>{};
     final contents = File(filePath).readAsStringSync();
 
-    final imports = convertImportStatementsToAbsolutePaths(filePath, contents);
+    final imports = _convertImportStatementsToAbsolutePaths(filePath, contents);
 
     final _ = dependencies.add(filePath);
 
@@ -90,28 +94,46 @@ class DependencyVisitor {
     final relativeImports = <String>[];
     final absoluteImports = <String>[];
 
-    final lines = dartSource.split('\n');
+    final relativeMatches = Constants.relativeOrPartFileImportRegex.allMatches(dartSource);
+    final packageMatches = Constants.appPackageImportRegex.allMatches(dartSource);
 
-    for (final line in lines) {
-      final relativeMatch = Constants.relativeOrPartFileImportRegex.firstMatch(line);
-      final packageMatch = Constants.appPackageImportRegex.firstMatch(line);
+    for (final match in relativeMatches) {
+      final importedPath = match.group(1);
+      if (importedPath != null) {
+        Logger.d('Rel. import -> $importedPath');
 
-      if (relativeMatch != null) {
-        final importedPath = relativeMatch.group(1);
-        Logger.i('Rel. import: $line -> $importedPath');
-        if (importedPath != null) {
-          relativeImports.add(importedPath);
-        }
-      }
-
-      if (packageMatch != null) {
-        Logger.d('Package import: ${packageMatch.groups([0, 1]).map((e) => e.toString())}');
-        final importedPath = packageMatch.group(1);
-        if (importedPath != null) {
-          absoluteImports.add(importedPath);
-        }
+        relativeImports.add(importedPath);
       }
     }
+
+    for (final match in packageMatches) {
+      final importedPath = match.group(1);
+      if (importedPath != null) {
+        Logger.d('Abs. import -> $importedPath');
+        absoluteImports.add(importedPath);
+      }
+    }
+
+    // for (final line in dartSource.split('\n')) {
+    //   final relativeMatch = Constants.relativeOrPartFileImportRegex.firstMatch(line);
+    //   final packageMatch = Constants.appPackageImportRegex.firstMatch(line);
+
+    //   if (relativeMatch != null) {
+    //     final importedPath = relativeMatch.group(1);
+    //     if (importedPath != null) {
+    //       Logger.d('Rel. import -> $importedPath');
+    //       relativeImports.add(importedPath);
+    //     }
+    //   }
+
+    //   if (packageMatch != null) {
+    //     final importedPath = packageMatch.group(1);
+    //     if (importedPath != null) {
+    //       Logger.d('Package import: ${packageMatch.groups([0, 1]).map((e) => e.toString())}');
+    //       absoluteImports.add(importedPath);
+    //     }
+    //   }
+    // }
 
     return {
       _absoluteImportsConst: absoluteImports,

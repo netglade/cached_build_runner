@@ -1,6 +1,6 @@
 part of '../json_part.dart';
 
-@JsonSerializable() //x
+@JsonSerializable()
 class JsonDartPartOf {
   final int id;
 

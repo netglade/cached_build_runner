@@ -12,34 +12,24 @@ class BuildRunnerWrapper {
       'Generating Codes for non-cached files, found ${files.length} files',
     );
 
-    /// following command needs to be executed
-    /// flutter pub run build_runner build --build-filter="..." -d
-    /// where ... contains the list of files that needs generation
     Logger.v('Running build_runner build...', showPrefix: false);
 
     final filterList = _getBuildFilterList(files);
 
-    // CLEANUP import files
-    // for (final file in files.where((element) => element.generatedType == CodeFileGeneratedType.import)) {
-    //   final f = File(file.getGeneratedFilePath());
-
-    //   if (f.existsSync()) f.deleteSync();
-    // }
-
-    /// TODO: let's check how we can use the build_runner package and include in this project
-    /// instead of relying on the flutter pub run command
-    /// there can be issues with flutter being in the path.
-
-    Logger.v('Run: "flutter pub run build_runner build --build-filter $filterList"');
+    Logger.d('Run: "flutter pub run build_runner build --build-filter $filterList"');
     final process = Process.runSync(
       'flutter',
       ['pub', 'run', 'build_runner', 'build', '--delete-conflicting-outputs', '--build-filter', filterList],
       workingDirectory: Utils.projectDirectory,
+      runInShell: true,
     );
     final stdOut = process.stdout?.toString() ?? '';
     final stdErrr = process.stderr?.toString() ?? '';
     Logger.v(stdOut.trim(), showPrefix: false);
-    Logger.v(stdErrr.trim(), showPrefix: false);
+
+    if (stdErrr.trim().isNotEmpty) {
+      Logger.e(stdErrr.trim());
+    }
 
     return process.exitCode == 0;
   }

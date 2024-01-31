@@ -74,21 +74,5 @@ class FileParser {
     }
 
     return null;
-
-    // final partOfMatch = Constants.partOfFileRegex.firstMatch(fileContent);
-
-    // if (partOfMatch != null) {
-    //   final partOf = partOfMatch.group(1)!;
-
-    //   final f = path.normalize(path.join(entity.parent.path, partOf));
-    //   print('Result: $f');
-
-    //   final absolute = path.join(Utils.projectDirectory, partOf);
-    //   final normalized = path.normalize(absolute);
-    //   print('partOf: $partOf, abs: $absolute, norm: $normalized');
-    //   // final result = checkPartOfFile(filePath, normalized);
-
-    //   return _parseFile(File(normalized));
-    // }
   }
 }
