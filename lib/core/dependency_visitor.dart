@@ -1,15 +1,12 @@
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/constants.dart';
+import 'package:cached_build_runner/utils/logger.dart';
 import 'package:cached_build_runner/utils/utils.dart';
 import 'package:path/path.dart' as path;
 
+/// Used for calculating hash.
 class DependencyVisitor {
-  /// Regex for parsing import statements.
-  final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
-  final packageImportRegex = RegExp(
-    "import\\s+'package:${Utils.appPackageName}/(.*)';",
-  );
-
   static const _relativeImportsConst = 'relative-imports';
   static const _absoluteImportsConst = 'absolute-imports';
 
@@ -32,10 +29,15 @@ class DependencyVisitor {
   }
 
   List<String> convertImportStatementsToAbsolutePaths(
+    String filePath,
     String contents, {
     String directory = 'lib',
   }) {
     final importLines = _getImportLines(contents);
+
+    final res = importLines.entries.map((value) => '${value.key}: ${value.value}').join('\n');
+    Logger.d('File: $filePath:\n $res');
+
     final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
     final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
 
@@ -43,9 +45,7 @@ class DependencyVisitor {
 
     /// absolute import lines
     for (final import in absoluteImportLines) {
-      paths.add(
-        path.join(Utils.projectDirectory, directory, import.substring(1)),
-      );
+      paths.add(path.join(Utils.projectDirectory, directory, import));
     }
 
     /// relative import lines
@@ -68,7 +68,7 @@ class DependencyVisitor {
     final dependencies = <String>{};
     final contents = File(filePath).readAsStringSync();
 
-    final imports = convertImportStatementsToAbsolutePaths(contents);
+    final imports = convertImportStatementsToAbsolutePaths(filePath, contents);
 
     final _ = dependencies.add(filePath);
 
@@ -93,17 +93,19 @@ class DependencyVisitor {
     final lines = dartSource.split('\n');
 
     for (final line in lines) {
-      final relativeMatch = relativeImportRegex.firstMatch(line);
-      final packageMatch = packageImportRegex.firstMatch(line);
+      final relativeMatch = Constants.relativeOrPartFileImportRegex.firstMatch(line);
+      final packageMatch = Constants.appPackageImportRegex.firstMatch(line);
 
       if (relativeMatch != null) {
         final importedPath = relativeMatch.group(1);
+        Logger.i('Rel. import: $line -> $importedPath');
         if (importedPath != null) {
           relativeImports.add(importedPath);
         }
       }
 
       if (packageMatch != null) {
+        Logger.d('Package import: ${packageMatch.groups([0, 1]).map((e) => e.toString())}');
         final importedPath = packageMatch.group(1);
         if (importedPath != null) {
           absoluteImports.add(importedPath);

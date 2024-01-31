@@ -26,11 +26,9 @@ class ArgumentParser {
       );
     }
 
-    /// quiet
+    /// verbose
     Utils.isVerbose = result[ArgsUtils.verbose] as bool;
-
-    /// use redis
-    Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
+    Utils.isDebug = result[ArgsUtils.debug] as bool;
 
     // enable prunning
     Utils.isPruneEnabled = result[ArgsUtils.lockPrune] as bool;
@@ -45,10 +43,9 @@ class ArgumentParser {
         negatable: false,
       )
       ..addFlag(
-        ArgsUtils.useRedis,
-        abbr: 'r',
-        help:
-            'Use redis database, if installed on the system. Using redis allows multiple instance access. Ideal for usage in pipelines. Default implementation uses a file system storage (hive), which is idea for usage in local systems.',
+        ArgsUtils.debug,
+        abbr: 'd',
+        help: 'Enables debug mode',
         negatable: false,
       )
       ..addFlag(

@@ -18,14 +18,8 @@ class FileParser {
   FileParser({DependencyVisitor? dependencyVisitor})
       : _dependencyVisitor = dependencyVisitor ?? GetIt.I<DependencyVisitor>();
 
-  /// This method returns all the files in the 'lib/' directory that need code generation. It first identifies the files
-  /// containing part '.g.dart'; statements using a regular expression. It then uses the grep command to find those
-  /// files and exclude any files that already have a .g.dart extension. Finally, it maps the file paths to a list of
-  /// CodeFile instances, which contains the file path and its corresponding digest calculated using the Utils.calculateDigestFor
-  /// method.
-  ///
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
-  List<CodeFile> fetchFilePathsFromLib() {
+  List<CodeFile> getFilesNeedingGeneration() {
     /// Files in "lib/" that needs code generation
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
@@ -67,44 +61,34 @@ class FileParser {
     final filePath = entity.path.trim();
     final fileContent = entity.readAsStringSync();
 
-    final partMatch = Constants.partFileRegex.firstMatch(fileContent);
+    final partMatch = Constants.partGeneratedFileRegex.firstMatch(fileContent);
 
     if (partMatch != null) {
-      print('part file: $filePath');
-
       return (path: filePath, suffix: partMatch.group(1), type: CodeFileGeneratedType.partFile);
     }
 
     final importMatch = Constants.generatedFileImportRegExp.firstMatch(fileContent);
 
     if (importMatch != null) {
-      print('import file: $filePath');
-      print(importMatch.pattern);
-
       return (path: filePath, suffix: importMatch.group(1), type: CodeFileGeneratedType.import);
     }
 
-    final partOfMatch = Constants.partOfFileRegex.firstMatch(fileContent);
-
-    if (partOfMatch != null) {
-      final partOf = partOfMatch.group(1)!;
-
-      final f = path.normalize(path.join(entity.parent.path, partOf));
-      print('Result: $f');
-
-      final absolute = path.join(Utils.projectDirectory, partOf);
-      final normalized = path.normalize(absolute);
-      print('partOf: $partOf, abs: $absolute, norm: $normalized');
-      // final result = checkPartOfFile(filePath, normalized);
-
-      return _parseFile(File(normalized));
-    }
-
     return null;
-  }
 
-  // CodeFileBuild? checkPartOfFile(String path) {
-  //   final file = File(path);
-  //   final fileContent = file
-  // }
+    // final partOfMatch = Constants.partOfFileRegex.firstMatch(fileContent);
+
+    // if (partOfMatch != null) {
+    //   final partOf = partOfMatch.group(1)!;
+
+    //   final f = path.normalize(path.join(entity.parent.path, partOf));
+    //   print('Result: $f');
+
+    //   final absolute = path.join(Utils.projectDirectory, partOf);
+    //   final normalized = path.normalize(absolute);
+    //   print('partOf: $partOf, abs: $absolute, norm: $normalized');
+    //   // final result = checkPartOfFile(filePath, normalized);
+
+    //   return _parseFile(File(normalized));
+    // }
+  }
 }

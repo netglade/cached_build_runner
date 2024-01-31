@@ -29,6 +29,11 @@ class Logger {
     _logger.v('${showPrefix ? '│ ' : ''}$message');
   }
 
+  /// Logs a debug message.
+  static void d(String message) {
+    _logger.d(message);
+  }
+
   /// Logs an information message.
   static void i(String message) {
     _logger.i(message);
@@ -54,6 +59,8 @@ class _LogFilter extends logger.LogFilter {
 
     if (event.level == logger.Level.verbose && Utils.isVerbose) return true;
 
-    return event.level != logger.Level.verbose;
+    if (event.level == logger.Level.debug && Utils.isDebug) return true;
+
+    return event.level != logger.Level.verbose && event.level != logger.Level.debug;
   }
 }

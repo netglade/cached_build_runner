@@ -6,7 +6,7 @@ abstract class ArgsUtils {
 
   /// Argument flags & options.
   static const verbose = 'verbose';
-  static const useRedis = 'redis';
+  static const debug = 'debug';
   static const cacheDirectory = 'cache-directory';
   static const lockPrune = 'prune';
 }

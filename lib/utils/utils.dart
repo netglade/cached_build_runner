@@ -11,6 +11,7 @@ abstract class Utils {
   static String appCacheDirectory = '';
   static String projectDirectory = '';
   static bool isVerbose = true;
+  static bool isDebug = false;
   static bool isRedisUsed = false;
   static bool isPruneEnabled = false;
 

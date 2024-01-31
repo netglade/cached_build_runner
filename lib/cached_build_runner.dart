@@ -94,7 +94,7 @@ class CachedBuildRunner implements Disposable {
 
     await _cacheProvider.ensurePruning();
 
-    final libFiles = _fileParser.fetchFilePathsFromLib();
+    final libFiles = _fileParser.getFilesNeedingGeneration();
     final files = List<CodeFile>.of(libFiles);
 
     final mappedResult = await _cacheProvider.mapFilesToCache(files);

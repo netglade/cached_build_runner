@@ -9,23 +9,16 @@ environment:
   sdk: ">=2.19.2 <3.0.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
-  cupertino_icons: ^1.0.2
   json_serializable: ^6.6.1
   json_annotation: ^4.8.1
   freezed_annotation: ^2.4.1
-  auto_mappr_annotation:
-    path: ../../auto_mappr/packages/auto_mappr_annotation
+  auto_mappr_annotation: 2.1.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   build_runner: ^2.3.3
   cached_build_runner:
     path: ../
-  auto_mappr:
-    path: ../../auto_mappr/packages/auto_mappr
+  auto_mappr: 2.2.0
 
   flutter_lints: ^2.0.0
   freezed: ^2.4.6
