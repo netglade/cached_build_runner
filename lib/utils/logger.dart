@@ -26,6 +26,7 @@ class Logger {
   ///
   /// If [showPrefix] is `true`, the message will be prefixed with a vertical bar.
   static void v(String message, {bool showPrefix = true}) {
+    // ignore: avoid-non-ascii-symbols, ascii here is ok.
     _logger.v('${showPrefix ? '│ ' : ''}$message');
   }
 

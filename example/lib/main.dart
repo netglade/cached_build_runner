@@ -1,3 +1,1 @@
-void main() {
-  print('Example');
-}
+void main() {}

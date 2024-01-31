@@ -121,7 +121,7 @@ class HiveDatabaseService implements DatabaseService {
     for (final key in _box.keys) {
       final value = _box.get(key);
 
-      result[key as String] = value!;
+      result[key as String] = value ?? '';
     }
 
     return Future.value(result);

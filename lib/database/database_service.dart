@@ -7,6 +7,7 @@ abstract class DatabaseService {
   /// Initializes the database service.
   Future<void> init();
 
+  /// Returns all stored keys and their associated value.
   Future<Map<String, String>> getAllData();
 
   /// Checks if the mapping is available for the given digests in bulk.

@@ -7,14 +7,14 @@ import 'package:cached_build_runner/utils/utils.dart';
 class Initializer {
   const Initializer();
   void init() {
-    /// the project directory is always where the `flutter run` command is executed
-    /// which is the current directory
+    // the project directory is always where the `flutter run` command is executed
+    // which is the current directory
     Utils.projectDirectory = Platform.environment['CACHED_BUILD_RUNNER_PROJECT_DIRECTORY'] ?? Directory.current.path;
 
-    /// let's make the appCacheDirectory if not existing already
+    // let's make the appCacheDirectory if not existing already
     Directory(Utils.appCacheDirectory).createSync(recursive: true);
 
-    /// init package name of project
+    // init package name of project
     Utils.initAppPackageName();
   }
 }

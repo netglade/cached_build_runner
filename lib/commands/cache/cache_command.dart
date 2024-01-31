@@ -5,7 +5,7 @@ import 'package:cached_build_runner/commands/cache/list_cache_sub_command.dart';
 
 class CacheCommand extends Command<void> {
   @override
-  String get description => 'Prune cache directory';
+  String get description => 'Commands for inspecting and manipulating cache directory';
 
   @override
   String get name => ArgsUtils.commands.cache;
@@ -14,17 +14,4 @@ class CacheCommand extends Command<void> {
     addSubcommand(CachePruneSubCommand());
     addSubcommand(ListCacheSubCommand());
   }
-
-  // @override
-  // Future<void> run() {
-  //   DiContainer.setup();
-
-  //   /// parse args for the command
-  //   _argumentParser.parseArgs(argResults?.arguments);
-
-  //   /// let's get the cachedBuildRunner and execute the build
-  //   final cachedBuildRunner = _initializer.init();
-
-  //   return cachedBuildRunner.prune();
-  // }
 }

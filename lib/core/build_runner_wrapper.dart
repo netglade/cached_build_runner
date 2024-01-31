@@ -6,6 +6,7 @@ import 'package:cached_build_runner/utils/utils.dart';
 
 class BuildRunnerWrapper {
   const BuildRunnerWrapper();
+
   bool runBuild(List<CodeFile> files) {
     if (files.isEmpty) return true;
     Logger.header(
@@ -46,7 +47,7 @@ class BuildRunnerWrapper {
   /// final buildFilter = _getBuildFilterList(files);
   /// print(buildFilter); // 'lib/foo.g.dart'.
   String _getBuildFilterList(List<CodeFile> files) {
-    final paths = files.map<String>((x) => x.getSourceFilePath()).toList();
+    final paths = files.map<String>((x) => x.getGeneratedFilePath()).toList();
 
     return paths.join(',');
   }

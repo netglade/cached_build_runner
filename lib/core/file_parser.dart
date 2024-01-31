@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_build_runner/core/dependency_visitor.dart';
 import 'package:cached_build_runner/model/code_file.dart';
+import 'package:cached_build_runner/model/code_file_generated_type.dart';
 import 'package:cached_build_runner/utils/constants.dart';
 import 'package:cached_build_runner/utils/digest_utils.dart';
 import 'package:cached_build_runner/utils/extension.dart';
@@ -20,7 +21,7 @@ class FileParser {
 
   /// Returns a list of [CodeFile] instances that represent the files that need code generation.
   List<CodeFile> getFilesNeedingGeneration() {
-    /// Files in "lib/" that needs code generation
+    // Files in "lib/" that needs code generation
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
     final libPathList = <CodeFileBuild>[];

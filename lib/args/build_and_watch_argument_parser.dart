@@ -1,9 +1,9 @@
 import 'package:args/args.dart';
 import 'package:cached_build_runner/args/args_utils.dart';
-import 'package:cached_build_runner/utils/logger.dart';
+import 'package:cached_build_runner/args/argument_parser_base.dart';
 import 'package:cached_build_runner/utils/utils.dart';
 
-class BuildAndWatchArgumentParser {
+class BuildAndWatchArgumentParser extends ArgumentParserBase {
   final ArgParser _argParser;
 
   BuildAndWatchArgumentParser(this._argParser) {
@@ -13,20 +13,11 @@ class BuildAndWatchArgumentParser {
   void parseArgs(Iterable<String>? arguments) {
     if (arguments == null) return;
 
-    /// parse all args
+    // parse all args
     final result = _argParser.parse(arguments);
 
-    /// cache directory
-    if (result.wasParsed(ArgsUtils.args.cacheDirectory)) {
-      Utils.appCacheDirectory = result[ArgsUtils.args.cacheDirectory] as String;
-    } else {
-      Utils.appCacheDirectory = Utils.getDefaultCacheDirectory();
-      Logger.i(
-        "As no '${ArgsUtils.args.cacheDirectory}' was specified, using the default directory: ${Utils.appCacheDirectory}",
-      );
-    }
+    parseCacheDirectory(result);
 
-    /// verbose
     Utils.isVerbose = result[ArgsUtils.args.verbose] as bool;
     Utils.isDebug = result[ArgsUtils.args.debug] as bool;
 

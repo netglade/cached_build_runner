@@ -26,10 +26,7 @@ class BuildCommand extends Command<void> {
 
   @override
   Future<void> run() {
-    /// parse args for the command
     _argumentParser.parseArgs(argResults?.arguments);
-
-    /// let's get the cachedBuildRunner and execute the build
     _initializer.init();
 
     return _cachedBuildRunner.build();

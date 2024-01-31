@@ -1,10 +1,6 @@
+import 'package:cached_build_runner/model/code_file_generated_type.dart';
 import 'package:cached_build_runner/utils/utils.dart';
-import 'package:path/path.dart' as pathUtils;
-
-enum CodeFileGeneratedType {
-  import,
-  partFile,
-}
+import 'package:path/path.dart' as path_utils;
 
 class CodeFile {
   final String path;
@@ -25,17 +21,10 @@ class CodeFile {
     final lastDotDart = path.lastIndexOf('.dart');
 
     final fileExtension = '.${suffix ?? 'g'}.dart';
+    // ignore: avoid-substring, should be ok.
     final subPath = '${path.substring(0, lastDotDart)}$fileExtension';
 
-    return pathUtils.relative(subPath, from: Utils.projectDirectory);
-  }
-
-  String getSourceFilePath() {
-    return getGeneratedFilePath();
-
-    //if (generatedType == CodeFileGeneratedType.import) return getGeneratedFilePath();
-
-    //return pathUtils.relative(path, from: Utils.projectDirectory);
+    return path_utils.relative(subPath, from: Utils.projectDirectory);
   }
 
   @override

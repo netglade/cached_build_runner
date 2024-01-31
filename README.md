@@ -15,7 +15,7 @@ Global options:
 Available commands:
 * **build**: Performs a single build on the specified targets and then exits.
 * **watch**: Builds the specified targets, watching the file system for updates and rebuilding as appropriate.
-* **cache**: Commands for manipulating cache
+* **cache**: Commands for manipulating cache.
 
 Available arguments:
 * -h, --help: Print out usage instructions.
