@@ -128,7 +128,7 @@ class CacheProvider {
   }
 
   Future<void> copyGeneratedCodesFor(List<CodeFile> files) async {
-    Logger.header('Copying cached files to project directory (${files.length} total)');
+    Logger.i('Copying cached files to project directory (${files.length} total)');
 
     for (final file in files) {
       final cachedGeneratedCodePath = await _dbOperation(

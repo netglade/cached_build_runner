@@ -10,6 +10,8 @@ import 'package:cached_build_runner/utils/utils.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as path;
 
+typedef CodeFileBuild = ({String path, String? suffix, CodeFileGeneratedType type});
+
 class FileParser {
   final DependencyVisitor _dependencyVisitor;
 
@@ -27,7 +29,7 @@ class FileParser {
     /// Files in "lib/" that needs code generation
     final libDirectory = Directory(path.join(Utils.projectDirectory, 'lib'));
 
-    final libPathList = <({String path, String? suffix})>[];
+    final libPathList = <CodeFileBuild>[];
 
     final libFiles = libDirectory.listSync(
       recursive: true,
@@ -37,22 +39,9 @@ class FileParser {
     for (final entity in libFiles) {
       if (entity is! File || !entity.isDartSourceCodeFile()) continue;
 
-      final filePath = entity.path.trim();
-      final fileContent = entity.readAsStringSync();
+      final result = _parseFile(entity);
 
-      final partMatch = Constants.partFileRegex.firstMatch(fileContent);
-
-      if (partMatch != null) {
-        libPathList.add((path: filePath, suffix: partMatch.group(1)));
-        continue;
-      }
-
-      final importMatch = Constants.generatedFileImportRegExp.firstMatch(fileContent);
-
-      if (importMatch != null) {
-        libPathList.add((path: filePath, suffix: importMatch.group(1)));
-        continue;
-      }
+      if (result != null) libPathList.add(result);
     }
 
     Logger.i(
@@ -68,8 +57,54 @@ class FileParser {
               f.path,
             ),
             suffix: f.suffix,
+            generatedType: f.type,
           ),
         )
         .toList();
   }
+
+  CodeFileBuild? _parseFile(File entity) {
+    final filePath = entity.path.trim();
+    final fileContent = entity.readAsStringSync();
+
+    final partMatch = Constants.partFileRegex.firstMatch(fileContent);
+
+    if (partMatch != null) {
+      print('part file: $filePath');
+
+      return (path: filePath, suffix: partMatch.group(1), type: CodeFileGeneratedType.partFile);
+    }
+
+    final importMatch = Constants.generatedFileImportRegExp.firstMatch(fileContent);
+
+    if (importMatch != null) {
+      print('import file: $filePath');
+      print(importMatch.pattern);
+
+      return (path: filePath, suffix: importMatch.group(1), type: CodeFileGeneratedType.import);
+    }
+
+    final partOfMatch = Constants.partOfFileRegex.firstMatch(fileContent);
+
+    if (partOfMatch != null) {
+      final partOf = partOfMatch.group(1)!;
+
+      final f = path.normalize(path.join(entity.parent.path, partOf));
+      print('Result: $f');
+
+      final absolute = path.join(Utils.projectDirectory, partOf);
+      final normalized = path.normalize(absolute);
+      print('partOf: $partOf, abs: $absolute, norm: $normalized');
+      // final result = checkPartOfFile(filePath, normalized);
+
+      return _parseFile(File(normalized));
+    }
+
+    return null;
+  }
+
+  // CodeFileBuild? checkPartOfFile(String path) {
+  //   final file = File(path);
+  //   final fileContent = file
+  // }
 }

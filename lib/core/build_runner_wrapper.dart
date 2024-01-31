@@ -19,27 +19,29 @@ class BuildRunnerWrapper {
 
     final filterList = _getBuildFilterList(files);
 
+    // CLEANUP import files
+    // for (final file in files.where((element) => element.generatedType == CodeFileGeneratedType.import)) {
+    //   final f = File(file.getGeneratedFilePath());
+
+    //   if (f.existsSync()) f.deleteSync();
+    // }
+
     /// TODO: let's check how we can use the build_runner package and include in this project
     /// instead of relying on the flutter pub run command
     /// there can be issues with flutter being in the path.
+
+    Logger.v('Run: "flutter pub run build_runner build --build-filter $filterList"');
     final process = Process.runSync(
       'flutter',
-      ['pub', 'run', 'build_runner', 'build', '--build-filter', filterList],
+      ['pub', 'run', 'build_runner', 'build', '--delete-conflicting-outputs', '--build-filter', filterList],
       workingDirectory: Utils.projectDirectory,
     );
+    final stdOut = process.stdout?.toString() ?? '';
+    final stdErrr = process.stderr?.toString() ?? '';
+    Logger.v(stdOut.trim(), showPrefix: false);
+    Logger.v(stdErrr.trim(), showPrefix: false);
 
-    if (process.stderr.toString().isNotEmpty || process.exitCode != 0) {
-      if (process.stdout.toString().isNotEmpty) Logger.e('BUILD_RUNNER failed!\n${process.stdout.toString().trim()}');
-
-      if (process.stderr.toString().isNotEmpty) {
-        Logger.e(process.stderr.toString().trim());
-      }
-
-      return false;
-    }
-    Logger.v(process.stdout.toString().trim(), showPrefix: false);
-
-    return true;
+    return process.exitCode == 0;
   }
 
   /// Returns a comma-separated string of the file paths from the given list of [CodeFile]s
@@ -54,7 +56,7 @@ class BuildRunnerWrapper {
   /// final buildFilter = _getBuildFilterList(files);
   /// print(buildFilter); // 'lib/foo.g.dart'.
   String _getBuildFilterList(List<CodeFile> files) {
-    final paths = files.map<String>((x) => x.getGeneratedFilePath()).toList();
+    final paths = files.map<String>((x) => x.getSourceFilePath()).toList();
 
     return paths.join(',');
   }

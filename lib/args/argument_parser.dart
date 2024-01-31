@@ -27,7 +27,7 @@ class ArgumentParser {
     }
 
     /// quiet
-    Utils.isVerbose = !result.wasParsed(ArgsUtils.quiet);
+    Utils.isVerbose = result[ArgsUtils.verbose] as bool;
 
     /// use redis
     Utils.isRedisUsed = result.wasParsed(ArgsUtils.useRedis);
@@ -39,9 +39,9 @@ class ArgumentParser {
   void _addFlagAndOption() {
     _argParser
       ..addFlag(
-        ArgsUtils.quiet,
-        abbr: 'q',
-        help: 'Disables printing out logs during build.',
+        ArgsUtils.verbose,
+        abbr: 'v',
+        help: 'Enables verbose mode',
         negatable: false,
       )
       ..addFlag(
