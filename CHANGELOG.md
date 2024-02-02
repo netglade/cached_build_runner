@@ -1,3 +1,18 @@
+## 0.1.0
+- Upgrade to Dart 3
+- Add prunning option - prune when pubspec.lock was changed
+- Add verbose mode
+- Add debug mode
+- Support part file imports, relative imports, package imports.
+- Support generated files that are imported rather than as "part" file.
+- Support other generated files, not just .g.dart.
+- Add cache commands
+  - Prune - clears cache directory
+  - List - list files, their actual hash and dirty state
+
+**Breaking change**
+- Drop support for "redis".
+
 ## 0.0.7
 
 - Fix a major bug where a class's dependencies were not considered while generating digest, so any change in the super classes caused wrong output.

@@ -1,30 +1,64 @@
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/constants.dart';
+import 'package:cached_build_runner/utils/logger.dart';
+import 'package:cached_build_runner/utils/utils.dart';
 import 'package:path/path.dart' as path;
 
-import '../utils/utils.dart';
-
+/// Used for calculating hash.
 class DependencyVisitor {
   static const _relativeImportsConst = 'relative-imports';
   static const _absoluteImportsConst = 'absolute-imports';
 
-  /// Regex for class name
-  final classNameRegex = RegExp(r"(?:mixin|abstract class|class)\s+(\w+)");
-
-  /// Regex for `extends`, `implements` & `with`
-  final extendsRegex = RegExp(r"extends\s+(\w+)");
-  final implementsRegex = RegExp(r"implements\s+([\w\s,]+)");
-  final withRegex = RegExp(r"with\s+([\w\s,]+)");
-
-  /// Regex for parsing import statements
-  final relativeImportRegex = RegExp(r'''import\s+(?!(\w+:))(?:'|")(.*?)('|");?''');
-  final packageImportRegex = RegExp(
-    'import\\s+\'package:${Utils.appPackageName}(.*)\';',
-  );
-
   final Map<String, bool> _visitorMap = {};
 
   String _dirName = '';
+
+  void reset() {
+    _dirName = '';
+    _visitorMap.clear();
+  }
+
+  /// Method which returns back the dependant's paths of a class file.
+  Set<String> getDependenciesPath(String filePath) {
+    _dirName = path.dirname(filePath);
+    Logger.d('Depdencies for $filePath');
+    final paths = _getDependenciesPath(filePath);
+
+    Logger.d('=================================');
+    reset();
+
+    return paths;
+  }
+
+  List<String> _convertImportStatementsToAbsolutePaths(
+    String filePath,
+    String contents, {
+    String directory = 'lib',
+  }) {
+    Logger.d('File: $filePath');
+
+    final importLines = _getImportLines(contents);
+    final res = importLines.entries.map((value) => '${value.key}: ${value.value}').join('\n');
+    Logger.d('$res\n');
+
+    final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
+    final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
+
+    final paths = <String>[];
+
+    // absolute import lines
+    for (final import in absoluteImportLines) {
+      paths.add(path.join(Utils.projectDirectory, directory, import));
+    }
+
+    // relative import lines
+    for (final import in relativeImportLines) {
+      paths.add(path.normalize(path.join(_dirName, import)));
+    }
+
+    return paths;
+  }
 
   bool _hasNotVisited(String filePath) {
     return _visitorMap[filePath] == null;
@@ -34,34 +68,21 @@ class DependencyVisitor {
     _visitorMap[filePath] = true;
   }
 
-  void reset() {
-    _dirName = '';
-    _visitorMap.clear();
-  }
-
-  /// Method which returns back the dependant's paths of a class file
-  Set<String> getDependenciesPath(String filePath) {
-    _dirName = path.dirname(filePath);
-    final paths = _getDependenciesPath(filePath);
-    reset();
-    return paths;
-  }
-
   Set<String> _getDependenciesPath(String filePath) {
     final dependencies = <String>{};
     final contents = File(filePath).readAsStringSync();
 
-    final classDependencies = _getClassDependency(contents);
-    final dependencyPaths = _resolveUri(contents, classDependencies);
+    final imports = _convertImportStatementsToAbsolutePaths(filePath, contents);
 
-    dependencies.addAll(dependencyPaths);
+    final _ = dependencies.add(filePath);
 
-    /// Find out transitive dependencies
-    for (final dependencyPath in dependencyPaths) {
-      /// There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
-      if (_hasNotVisited(dependencyPath)) {
-        _markVisited(dependencyPath);
-        final transitiveDependencies = _getDependenciesPath(dependencyPath);
+    // Find out transitive dependencies
+    for (final import in imports) {
+      // There can be a cyclic dependency, so to make sure we are not visiting the same node multiple times
+      if (_hasNotVisited(import)) {
+        _markVisited(import);
+        // ignore: avoid-recursive-calls, recursive call is ok.
+        final transitiveDependencies = _getDependenciesPath(import);
         dependencies.addAll(transitiveDependencies);
       }
     }
@@ -73,95 +94,29 @@ class DependencyVisitor {
     final relativeImports = <String>[];
     final absoluteImports = <String>[];
 
-    final lines = dartSource.split('\n');
+    final relativeMatches = Constants.relativeOrPartFileImportRegex.allMatches(dartSource);
+    final packageMatches = Constants.appPackageImportRegex.allMatches(dartSource);
 
-    for (final line in lines) {
-      final relativeMatch = relativeImportRegex.firstMatch(line);
-      final packageMatch = packageImportRegex.firstMatch(line);
+    for (final match in relativeMatches) {
+      final importedPath = match.group(1);
+      if (importedPath != null) {
+        Logger.d('Rel. import -> $importedPath');
 
-      if (relativeMatch != null) {
-        final importedPath = relativeMatch.group(1);
-        if (importedPath != null) relativeImports.add(importedPath);
+        relativeImports.add(importedPath);
       }
+    }
 
-      if (packageMatch != null) {
-        final importedPath = packageMatch.group(1);
-        if (importedPath != null) absoluteImports.add(importedPath);
+    for (final match in packageMatches) {
+      final importedPath = match.group(1);
+      if (importedPath != null) {
+        Logger.d('Abs. import -> $importedPath');
+        absoluteImports.add(importedPath);
       }
     }
 
     return {
-      _relativeImportsConst: relativeImports,
       _absoluteImportsConst: absoluteImports,
+      _relativeImportsConst: relativeImports,
     };
-  }
-
-  List<String> convertImportStatementsToAbsolutePaths(
-    String contents, {
-    String directory = 'lib',
-  }) {
-    final importLines = _getImportLines(contents);
-    final relativeImportLines = importLines[_relativeImportsConst] ?? const [];
-    final absoluteImportLines = importLines[_absoluteImportsConst] ?? const [];
-
-    final paths = <String>[];
-
-    /// absolute import lines
-    for (final import in absoluteImportLines) {
-      paths.add(
-        path.join(Utils.projectDirectory, directory, import.substring(1)),
-      );
-    }
-
-    /// relative import lines
-    for (final import in relativeImportLines) {
-      paths.add(path.normalize(path.join(_dirName, import)));
-    }
-
-    return paths;
-  }
-
-  Set<String> _resolveUri(String contents, Set<String> dependencies) {
-    final importPaths = convertImportStatementsToAbsolutePaths(contents);
-    final paths = <String>{};
-
-    for (final dependencyPath in importPaths) {
-      final dependencyContents = File(dependencyPath).readAsStringSync();
-
-      for (final dependencyClass in dependencies) {
-        final classNameMatch = classNameRegex.firstMatch(dependencyContents);
-        final className = classNameMatch?.group(1);
-        if (className == dependencyClass) {
-          paths.add(dependencyPath);
-        }
-      }
-    }
-
-    return paths;
-  }
-
-  Set<String> _getClassDependency(String contents) {
-    final dependencies = <String>{};
-
-    /// find matches
-    final extendsMatch = extendsRegex.firstMatch(contents);
-    final implementsMatch = implementsRegex.firstMatch(contents);
-    final withMatch = withRegex.firstMatch(contents);
-
-    if (extendsMatch != null) {
-      dependencies.add(extendsMatch.group(1) ?? '');
-    }
-
-    if (implementsMatch != null) {
-      final interfaces = implementsMatch.group(1)?.split(',') ?? const [];
-      dependencies.addAll(interfaces.map((i) => i.trim()));
-    }
-
-    if (withMatch != null) {
-      final mixins = withMatch.group(1)?.split(',') ?? const [];
-      dependencies.addAll(mixins.map((m) => m.trim()));
-    }
-
-    return dependencies;
   }
 }

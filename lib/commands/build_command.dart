@@ -1,33 +1,34 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:cached_build_runner/args/args_utils.dart';
+import 'package:cached_build_runner/args/build_and_watch_argument_parser.dart';
+import 'package:cached_build_runner/cached_build_runner.dart';
+import 'package:cached_build_runner/commands/initializer.dart';
+import 'package:get_it/get_it.dart';
 
-import '../args/args_parser.dart';
-import '../args/args_utils.dart';
-import 'initializer.dart';
-
-class BuildCommand extends Command {
-  late final ArgumentParser _argumentParser;
+class BuildCommand extends Command<void> {
+  late final BuildAndWatchArgumentParser _argumentParser;
   final Initializer _initializer;
+  final CachedBuildRunner _cachedBuildRunner;
 
-  BuildCommand() : _initializer = Initializer() {
-    _argumentParser = ArgumentParser(argParser);
+  @override
+  String get description => 'Performs a single build on the specified targets and then exits.';
+
+  @override
+  String get name => ArgsUtils.commands.build;
+
+  BuildCommand({CachedBuildRunner? cachedBuildRunner})
+      : _initializer = const Initializer(),
+        _cachedBuildRunner = cachedBuildRunner ?? GetIt.I<CachedBuildRunner>() {
+    _argumentParser = BuildAndWatchArgumentParser(argParser);
   }
 
   @override
-  String get description =>
-      'Performs a single build on the specified targets and then exits.';
-
-  @override
-  String get name => ArgsUtils.build;
-
-  @override
-  FutureOr? run() async {
-    /// parse args for the command
+  Future<void> run() {
     _argumentParser.parseArgs(argResults?.arguments);
+    _initializer.init();
 
-    /// let's get the cachedBuildRunner and execute the build
-    final cachedBuildRunner = await _initializer.init();
-    return cachedBuildRunner.build();
+    return _cachedBuildRunner.build();
   }
 }

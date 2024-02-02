@@ -1,0 +1,17 @@
+# # targets:
+# #   $default:
+# #     builders:
+# #       drift_dev:
+# #         enabled: false
+# #       drift_dev:not_shared:
+# #         enabled: true
+# #         generate_for:
+# #           include:
+# #             - lib/domain/data/**.dart
+# global_options:
+#   freezed:
+#     runs_before:
+#       - auto_mappr
+#   json_serializable:
+#     runs_before:
+#       - auto_mappr

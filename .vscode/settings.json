@@ -1,0 +1,6 @@
+{
+    "yaml.schemaStore.enable": false,
+    "dart.sdkPaths": [
+        ".fvm/flutter_sdk"
+    ],
+}

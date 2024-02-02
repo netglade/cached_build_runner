@@ -1,8 +1,9 @@
+// ignore_for_file: avoid-global-state
+
 import 'dart:io';
 
+import 'package:cached_build_runner/utils/logger.dart';
 import 'package:path/path.dart' as path;
-
-import 'log.dart';
 
 /// A utility class that provides helper methods for various operations.
 abstract class Utils {
@@ -10,17 +11,18 @@ abstract class Utils {
   static String appCacheDirectory = '';
   static String projectDirectory = '';
   static bool isVerbose = true;
+  static bool isDebug = false;
   static bool isRedisUsed = false;
+  static bool isPruneEnabled = false;
 
   /// Initializes the app package name by reading it from pubspec.yaml.
   static void initAppPackageName() {
     const pubspecFileName = 'pubspec.yaml';
     const searchString = 'name:';
 
-    final pubspecFile = File(path.join(
-      Utils.projectDirectory,
-      pubspecFileName,
-    ));
+    final pubspecFile = File(
+      path.join(Utils.projectDirectory, pubspecFileName),
+    );
 
     if (!pubspecFile.existsSync()) {
       reportError(
@@ -30,18 +32,14 @@ abstract class Utils {
 
     for (final line in pubspecFile.readAsLinesSync()) {
       if (line.contains(searchString)) {
-        appPackageName = line.split(searchString).last.trim();
+        appPackageName = line.split(searchString).lastOrNull?.trim() ?? '';
       }
     }
   }
 
-  /// Logs a header [title] to the console.
-  static void logHeader(String title) {
-    Logger.i(title);
-  }
-
   /// Retrieves the file name from the given [path].
   static String getFileName(String path) {
+    // ignore: avoid-unsafe-collection-methods, its safe.
     return path.split('/').last;
   }
 
@@ -55,12 +53,7 @@ abstract class Utils {
     const defaultCacheDirectoryName = '.cached_build_runner';
     String homeDir;
 
-    if (Platform.isWindows) {
-      homeDir = Platform.environment['USERPROFILE'] ?? '';
-    } else {
-      homeDir = Platform.environment['HOME'] ?? '';
-    }
-
+    homeDir = Platform.isWindows ? Platform.environment['USERPROFILE'] ?? '' : Platform.environment['HOME'] ?? '';
     if (homeDir.isEmpty) {
       reportError(
         'Could not set default cache directory. Please use the --cache-directory flag to provide a cache directory.',
